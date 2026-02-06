@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { CircleMintTester } from './test-functions.js';
+import { AccountAndTransferTester } from './account-and-transfers.js';
 import { config } from './config.js';
 
 /**
@@ -12,7 +13,7 @@ async function main() {
   console.log('╚═══════════════════════════════════════════════════════╝');
   console.log(`\nEnvironment: ${config.environment}`);
   console.log(`Base URL: ${config.baseUrl}`);
-  
+
   if (!config.apiKey) {
     console.error('\n❌ Error: CIRCLE_API_KEY is not set!');
     console.error('Please create a .env file with your Circle API key.');
@@ -30,15 +31,15 @@ async function main() {
         console.log('ℹ️  Note: Accounts API was deprecated. Testing business account endpoints...');
         await tester.testGetAccount();
         break;
-      
+
       case 'balance':
         await tester.testGetBalance();
         break;
-      
+
       case 'chains':
         await tester.testGetSupportedChains();
         break;
-      
+
       case 'deposits':
         if (args[1] === 'list') {
           await tester.testListDeposits();
@@ -50,7 +51,7 @@ async function main() {
           await tester.testListDepositAddresses();
         }
         break;
-      
+
       case 'payouts':
         if (args[1] === 'list') {
           await tester.testListPayouts();
@@ -60,23 +61,31 @@ async function main() {
           const chain = args[3];
           const amount = args[4];
           const currency = (args[5] as 'USDC' | 'EURC') || 'USDC';
-          
+
           if (!address || !chain || !amount) {
             console.error('Usage: payouts create <address> <chain> <amount> [currency]');
             process.exit(1);
           }
-          
+
           await tester.testCreatePayout({ address, chain, amount, currency });
         } else {
           await tester.testListPayouts();
         }
         break;
-      
+
       case 'all':
-      case undefined:
         await tester.runAllTests();
         break;
-      
+
+      case undefined:
+        console.log('ℹ️  Running development test flow (check balance -> deposit address -> auto transfer)...');
+        const transferTester = new AccountAndTransferTester();
+        await transferTester.runTestFlow({
+          autoTest: true,
+          blockchain: 'ETH'
+        });
+        break;
+
       default:
         console.log('\n📖 Available Commands:');
         console.log('  account              - Get account information');

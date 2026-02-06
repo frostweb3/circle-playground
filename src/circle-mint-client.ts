@@ -27,7 +27,7 @@ export class CircleMintClient {
     if (!url.startsWith('https://')) {
       throw new Error('Circle APIs require HTTPS. All requests must be made over HTTPS.');
     }
-    
+
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -66,50 +66,11 @@ export class CircleMintClient {
   }
 
   /**
-   * Create a deposit address (Crypto Deposits API)
-   * Formerly known as Payments API
-   * Note: May require account setup or use paymentIntents endpoint
-   */
-  async createDepositAddress(params: {
-    idempotencyKey: string;
-    blockchain: string;
-    accountId?: string;
-  }): Promise<any> {
-    // Normalize blockchain identifier (common formats: ETH, ETH-Goerli, MATIC, etc.)
-    const blockchain = params.blockchain.toUpperCase();
-    
-    // Try paymentIntents endpoint first (Crypto Deposits API)
-    // PaymentIntents may require additional fields like amount or currency
-    try {
-      // Try with minimal required fields first
-      const requestBody: any = {
-        idempotencyKey: params.idempotencyKey,
-        blockchain: blockchain,
-      };
-      
-      if (params.accountId) {
-        requestBody.accountId = params.accountId;
-      }
-      
-      return await this.request('/v1/paymentIntents', {
-        method: 'POST',
-        body: JSON.stringify(requestBody),
-      });
-    } catch (error: any) {
-      // If paymentIntents fails with 422, try deposits/addresses endpoint
-      if (error.message.includes('422') || error.message.includes('404')) {
-        try {
-          return await this.request('/v1/deposits/addresses', {
-            method: 'POST',
-            body: JSON.stringify({
-              idempotencyKey: params.idempotencyKey,
-              blockchain: blockchain,
-              ...(params.accountId && { accountId: params.accountId }),
             }),
           });
         } catch (fallbackError: any) {
           // Provide helpful error message
-          const errorMsg = error.message.includes('422') 
+          const errorMsg = error.message.includes('422')
             ? 'Invalid request format. PaymentIntents may require additional fields like amount or currency.'
             : error.message;
           throw new Error(
@@ -134,9 +95,9 @@ export class CircleMintClient {
     const queryParams = new URLSearchParams();
     if (params?.accountId) queryParams.append('accountId', params.accountId);
     if (params?.blockchain) queryParams.append('blockchain', params.blockchain);
-    
+
     const query = queryParams.toString();
-    
+
     // Try paymentIntents endpoint first
     try {
       const endpoint = query ? `/v1/paymentIntents?${query}` : '/v1/paymentIntents';
@@ -192,9 +153,9 @@ export class CircleMintClient {
     if (params?.accountId) queryParams.append('accountId', params.accountId);
     if (params?.blockchain) queryParams.append('blockchain', params.blockchain);
     if (params?.status) queryParams.append('status', params.status);
-    
+
     const query = queryParams.toString();
-    
+
     // Try paymentIntents endpoint first
     try {
       const endpoint = query ? `/v1/paymentIntents?${query}` : '/v1/paymentIntents';
@@ -231,7 +192,7 @@ export class CircleMintClient {
     };
     amount: {
       amount: string;
-      currency: 'USDC' | 'EURC';
+      currency: 'USD' | 'EUR' | 'BTC' | 'ETH';
     };
     source?: {
       type: 'wallet';
@@ -262,10 +223,10 @@ export class CircleMintClient {
     const queryParams = new URLSearchParams();
     if (params?.accountId) queryParams.append('accountId', params.accountId);
     if (params?.status) queryParams.append('status', params.status);
-    
+
     const query = queryParams.toString();
     const endpoint = query ? `/v1/payouts?${query}` : '/v1/payouts';
-    
+
     return this.request(endpoint);
   }
 
@@ -313,10 +274,10 @@ export class CircleMintClient {
   }): Promise<any> {
     const queryParams = new URLSearchParams();
     if (params?.status) queryParams.append('status', params.status);
-    
+
     const query = queryParams.toString();
     const endpoint = query ? `/v1/businessAccount/payouts?${query}` : '/v1/businessAccount/payouts';
-    
+
     return this.request(endpoint);
   }
 
@@ -339,5 +300,162 @@ export class CircleMintClient {
         currencies: ['USDC', 'EURC'],
       };
     }
+  }
+
+  /**
+   * Create a business wire bank account
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/create-business-wire-account
+   */
+  async createWireBankAccount(params: {
+    idempotencyKey: string;
+    accountNumber: string;
+    routingNumber: string;
+    billingDetails: {
+      name: string;
+      city: string;
+      country: string;
+      line1: string;
+      line2?: string;
+      district?: string;
+      postalCode: string;
+    };
+    bankAddress: {
+      bankName: string;
+      city: string;
+      country: string;
+      line1: string;
+      line2?: string;
+      district?: string;
+    };
+  }): Promise<any> {
+    return this.request('/v1/businessAccount/banks/wires', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  /**
+   * List wire bank accounts
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/list-business-wire-accounts
+   */
+  async listWireBankAccounts(): Promise<any> {
+    return this.request('/v1/businessAccount/banks/wires');
+  }
+
+  /**
+   * Create a mock Wire payment (Sandbox only)
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/create-mock-wire-payment
+   */
+  async createMockWirePayment(params: {
+    trackingRef: string;
+    amount: {
+      amount: string;
+      currency: 'USD';
+    };
+    beneficiaryBank: {
+      accountNumber: string;
+    };
+  }): Promise<any> {
+    return this.request('/v1/mocks/payments/wire', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  /**
+   * Get wire bank account instructions
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/get-business-wire-account-instructions
+   */
+  async getWireBankAccountInstructions(id: string): Promise<any> {
+    return this.request(`/v1/businessAccount/banks/wires/${id}/instructions`);
+  }
+
+  /**
+   * Create a business transfer (to verified blockchain recipient)
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/create-business-transfer
+   */
+  async createBusinessTransfer(params: {
+    idempotencyKey: string;
+    destination: {
+      type: 'verified_blockchain';
+      addressId: string;
+    };
+    amount: {
+      amount: string;
+      currency: 'USD' | 'EUR' | 'BTC' | 'ETH';
+    };
+    source?: {
+      type: 'wallet';
+      id: string;
+    };
+  }): Promise<any> {
+    return this.request('/v1/businessAccount/transfers', {
+      method: 'POST',
+    });
+  }
+
+  /**
+   * Get a business transfer
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/get-business-transfer
+   */
+  async getBusinessTransfer(id: string): Promise<any> {
+    return this.request(`/v1/businessAccount/transfers/${id}`);
+  }
+
+  /**
+   * Create a recipient address
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/create-business-recipient-address
+   */
+  async createRecipientAddress(params: {
+    idempotencyKey: string;
+    address: string;
+    chain: string;
+    currency: string;
+    description: string;
+    addressTag?: string;
+  }): Promise<any> {
+    return this.request('/v1/businessAccount/wallets/addresses/recipient', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  /**
+   * List recipient addresses
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/list-business-recipient-addresses
+   */
+  async listRecipientAddresses(): Promise<any> {
+    return this.request('/v1/businessAccount/wallets/addresses/recipient');
+  }
+
+  /**
+   * Get a recipient address
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/get-business-recipient-address
+   */
+  async getRecipientAddress(id: string): Promise<any> {
+    return this.request(`/v1/businessAccount/wallets/addresses/recipient/${id}`);
+  }
+
+  /**
+   * Create a deposit address
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/create-business-deposit-address
+   */
+  async createDepositAddress(params: {
+    idempotencyKey: string;
+    currency: string;
+    chain: string;
+  }): Promise<any> {
+    return this.request('/v1/businessAccount/wallets/addresses/deposit', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  /**
+   * List business deposit addresses
+   * Reference: https://developers.circle.com/api-reference/circle-mint/account/list-business-deposit-addresses
+   */
+  async listBusinessDepositAddresses(): Promise<any> {
+    return this.request('/v1/businessAccount/wallets/addresses/deposit');
   }
 }
