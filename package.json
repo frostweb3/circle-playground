@@ -1,0 +1,35 @@
+{
+  "name": "circle-mint-testing-app",
+  "version": "1.0.0",
+  "description": "Circle Mint testing application using Circle MCP",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "tsx src/test.ts",
+    "account": "tsx src/account-and-transfers.ts",
+    "account:build": "tsc && node dist/account-and-transfers.js",
+    "demo": "tsx src/demo-transfers.ts",
+    "entity-secret": "tsx src/entity-secret.ts"
+  },
+  "keywords": [
+    "circle",
+    "mint",
+    "usdc",
+    "eurc",
+    "testing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@circle-fin/developer-controlled-wallets": "^1.2.1",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
