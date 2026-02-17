@@ -391,6 +391,7 @@ export class CircleMintClient {
   }): Promise<any> {
     return this.request('/v1/businessAccount/transfers', {
       method: 'POST',
+      body: JSON.stringify(params),
     });
   }
 
