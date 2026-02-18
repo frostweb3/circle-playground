@@ -288,7 +288,6 @@ export class AccountAndTransferTester {
     autoTest?: boolean;
   }): Promise<void> {
     console.log('\n🚀 Starting Account and Transfer Test Flow');
-    console.log('═'.repeat(50));
 
     try {
       // Step 1: Check balance
@@ -396,7 +395,6 @@ export class AccountAndTransferTester {
       }
 
       console.log('\n✅ Test flow completed!');
-      console.log('═'.repeat(50));
     } catch (error: any) {
       console.error('\n❌ Test flow failed:', error.message);
       throw error;

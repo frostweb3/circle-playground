@@ -349,7 +349,6 @@ export class ExpressRouteTester {
     existingRecipientId?: string;
   }): Promise<void> {
     console.log('\nExpress Route Setup Flow');
-    console.log('═'.repeat(50));
     console.log('Automatically redeeming on-chain USDC to local fiat currency.\n');
 
     let bankAccountId = params?.existingBankId;
@@ -427,8 +426,7 @@ export class ExpressRouteTester {
       bankAccountId: bankAccountId!,
     });
 
-    console.log('\n═'.repeat(50));
-    console.log('Express route setup complete.');
+    console.log('\nExpress route setup complete.');
     console.log(`  Bank Account ID:     ${bankAccountId}`);
     console.log(`  Receipt Address:     ${depositAddress}`);
     console.log(`  Receipt Address ID:  ${depositAddressId}`);
