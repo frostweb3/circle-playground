@@ -1,5 +1,7 @@
 # Circle Mint Testing App
 
+![Circle Mint Dashboard](./circlemint.jpeg)
+
 A testing application for Circle Mint APIs. Interact with the full Circle Mint surface through a **web dashboard UI** or the **CLI**.
 
 **Learn more:**
