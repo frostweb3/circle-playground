@@ -12,7 +12,9 @@
     "account": "tsx src/account-and-transfers.ts",
     "account:build": "tsc && node dist/account-and-transfers.js",
     "demo": "tsx src/demo-transfers.ts",
-    "entity-secret": "tsx src/entity-secret.ts"
+    "entity-secret": "tsx src/entity-secret.ts",
+    "express-route": "tsx src/express-route.ts",
+    "server": "tsx src/server.ts"
   },
   "keywords": [
     "circle",
@@ -25,9 +27,13 @@
   "license": "MIT",
   "dependencies": {
     "@circle-fin/developer-controlled-wallets": "^1.2.1",
-    "dotenv": "^16.4.5"
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^20.11.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"

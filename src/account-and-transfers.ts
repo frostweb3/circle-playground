@@ -11,10 +11,10 @@ import { fileURLToPath } from 'url';
  */
 
 interface TransferParams {
-  recipientAddress: string;
+  recipientAddress: string; // Raw blockchain address — will be auto-added to address book
   chain: string;
-  amount: string; // Amount in smallest unit (e.g., "1000000" for 1 USDC)
-  currency?: 'USD' | 'EUR' | 'BTC' | 'ETH';
+  amount: string;
+  currency?: 'USD' | 'EUR';
 }
 
 export class AccountAndTransferTester {
@@ -76,17 +76,28 @@ export class AccountAndTransferTester {
         throw new Error('Invalid amount format. Must be a string representing major units (e.g. "1.00").');
       }
 
-      // Create payout/transfer
+      // The Crypto Payouts API requires an address book entry — create one first
+      console.log('\n📋 Adding address to address book...');
+      const abEntry = await this.client.createAddressBookRecipient({
+        idempotencyKey: `ab-${Date.now()}`,
+        chain: params.chain,
+        address: params.recipientAddress,
+        metadata: { nickname: `Transfer target ${params.chain}` },
+      });
+      const recipientId = abEntry.data?.id;
+      if (!recipientId) throw new Error('Failed to add address to address book');
+      console.log(`✅ Address book entry created: ${recipientId}`);
+
+      // Create payout using the address book recipient ID
       const idempotencyKey = `transfer-${Date.now()}`;
       const payout = await this.client.createPayout({
         idempotencyKey,
         destination: {
-          type: 'address',
-          address: params.recipientAddress,
-          chain: params.chain,
+          type: 'address_book',
+          id: recipientId,
         },
         amount: {
-          amount: params.amount,
+          amount: parseFloat(params.amount).toFixed(2),
           currency: params.currency || 'USD',
         },
       });
@@ -755,7 +766,7 @@ async function main() {
         const address = args[1];
         const chain = args[2];
         const amount = args[3];
-        const tCurrency = (args[4] as 'USD' | 'EUR' | 'BTC' | 'ETH') || 'USD';
+        const tCurrency = (args[4] as 'USD' | 'EUR') || 'USD';
 
         if (!address || !chain || !amount) {
           console.error('Usage: transfer <address> <chain> <amount> [currency]');
@@ -827,7 +838,7 @@ async function main() {
               recipientAddress: testAddress,
               chain: testChain,
               amount: testAmount,
-              currency: (args[5] as 'USD' | 'EUR' | 'BTC' | 'ETH') || 'USD',
+              currency: (args[5] as 'USD' | 'EUR') || 'USD',
             }
             : undefined,
         });

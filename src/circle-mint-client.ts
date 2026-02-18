@@ -179,26 +179,62 @@ export class CircleMintClient {
   }
 
   /**
+   * Create an address book recipient (Crypto Payouts API)
+   * Must be created before a payout can be sent to an address.
+   * Reference: POST /v1/addressBook/recipients
+   */
+  async createAddressBookRecipient(params: {
+    idempotencyKey: string;
+    chain: string;
+    address: string;
+    addressTag?: string;
+    metadata: {
+      nickname?: string;
+      email?: string;
+      bns?: string;
+    };
+  }): Promise<any> {
+    return this.request('/v1/addressBook/recipients', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  /**
+   * List address book recipients
+   */
+  async listAddressBookRecipients(): Promise<any> {
+    return this.request('/v1/addressBook/recipients');
+  }
+
+  /**
+   * Delete an address book recipient
+   */
+  async deleteAddressBookRecipient(id: string): Promise<any> {
+    return this.request(`/v1/addressBook/recipients/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /**
    * Create a payout (Crypto Payouts API)
-   * Formerly known as Payouts API
+   * destination.id must be an address book recipient UUID.
+   * Reference: POST /v1/payouts
    */
   async createPayout(params: {
     idempotencyKey: string;
     destination: {
-      type: 'address';
-      address: string;
-      addressTag?: string;
-      chain: string;
+      type: 'address_book';
+      id: string; // address book recipient UUID
     };
     amount: {
       amount: string;
-      currency: 'USD' | 'EUR' | 'BTC' | 'ETH';
+      currency: 'USD' | 'EUR';
     };
     source?: {
       type: 'wallet';
       id: string;
     };
-    metadata?: Record<string, any>;
   }): Promise<any> {
     return this.request('/v1/payouts', {
       method: 'POST',
@@ -458,5 +494,75 @@ export class CircleMintClient {
    */
   async listBusinessDepositAddresses(): Promise<any> {
     return this.request('/v1/businessAccount/wallets/addresses/deposit');
+  }
+
+  /**
+   * Create a mock blockchain payment (Sandbox only)
+   * Simulates an on-chain USDC deposit to a deposit address
+   * Reference: POST /v1/mocks/payments/blockchain
+   */
+  async createMockBlockchainDeposit(params: {
+    address: string;
+    amount: {
+      amount: string;
+      currency: 'USD' | 'USDC';
+    };
+    chain: string;
+  }): Promise<any> {
+    return this.request('/v1/mocks/payments/blockchain', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  /**
+   * Create an express route
+   * Ties a receipt (deposit) address to a bank account for automatic fiat redemption
+   * Reference: POST /v1/businessAccount/expressRoute
+   */
+  async createExpressRoute(params: {
+    idempotencyKey: string;
+    receiptAddressId: string; // deposit address ID
+    destinationBankAccountId: string; // wire bank account ID
+    destinationType: 'wire' | 'sepa' | 'sepa_instant';
+    currency: 'USD' | 'EUR';
+  }): Promise<any> {
+    return this.request('/v1/businessAccount/expressRoute', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  // ─── Notification Subscriptions ────────────────────────────────────────
+
+  async createSubscription(endpoint: string): Promise<any> {
+    return this.request('/v1/notifications/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint }),
+    });
+  }
+
+  async listSubscriptions(): Promise<any> {
+    return this.request('/v1/notifications/subscriptions');
+  }
+
+  async deleteSubscription(id: string): Promise<any> {
+    return this.request(`/v1/notifications/subscriptions/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /**
+   * List express routes
+   */
+  async listExpressRoutes(): Promise<any> {
+    return this.request('/v1/businessAccount/expressRoute');
+  }
+
+  /**
+   * Get a specific express route
+   */
+  async getExpressRoute(id: string): Promise<any> {
+    return this.request(`/v1/businessAccount/expressRoute/${id}`);
   }
 }
