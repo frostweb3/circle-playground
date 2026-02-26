@@ -32,9 +32,6 @@ export class ExpressRouteTester {
     accountNumber?: string;
     routingNumber?: string;
   }): Promise<any> {
-    console.log('\n[Step 1] Linking Bank Account...');
-    console.log('─'.repeat(50));
-
     const idempotencyKey = crypto.randomUUID();
     const body = {
       idempotencyKey,
@@ -59,26 +56,14 @@ export class ExpressRouteTester {
       },
     };
 
-    console.log('Using test bank data (sandbox)');
     try {
       const account = await this.client.createWireBankAccount(body);
-      console.log('Bank account linked:');
-      console.log(JSON.stringify(account, null, 2));
-
-      if (account.data?.id) {
-        console.log(`\nBank Account ID: ${account.data.id}`);
-        console.log(`Status:          ${account.data.status}`);
-        console.log(`Tracking Ref:    ${account.data.trackingRef}`);
-      }
-
       return account;
     } catch (error: any) {
       if (error.message?.includes('already') || error.message?.includes('2023') || error.message?.includes('400')) {
-        console.log('Bank account already exists — fetching existing accounts...');
         const existing = await this.client.listWireBankAccounts();
         const first = existing.data?.[0];
         if (first) {
-          console.log(`Reusing bank account: ${first.id} (${first.status})`);
           return { data: first };
         }
       }
@@ -92,9 +77,6 @@ export class ExpressRouteTester {
     chain?: string;
     currency?: string;
   } = {}): Promise<any> {
-    console.log('\n[Step 2] Linking Receipt Address (on-chain deposit address)...');
-    console.log('─'.repeat(50));
-
     const chain = params.chain ?? 'ETH';
     const currency = params.currency ?? 'USD';
 
@@ -106,28 +88,16 @@ export class ExpressRouteTester {
         currency,
       });
 
-      console.log('Receipt address created:');
-      console.log(JSON.stringify(address, null, 2));
-
-      if (address.data) {
-        console.log(`\nAddress: ${address.data.address}`);
-        console.log(`Chain:   ${address.data.chain}`);
-      }
-
       return address;
     } catch (error: any) {
       if (error.message?.includes('2023') || error.message?.includes('already')) {
-        console.log(`Deposit address for ${chain} already exists — fetching existing addresses...`);
         const existing = await this.client.listBusinessDepositAddresses();
         const match = existing.data?.find((a: any) => a.chain === chain);
         if (match) {
-          console.log(`Reusing deposit address: ${match.address} (${match.chain})`);
           return { data: match };
         }
-        // No chain match — return first available
         const first = existing.data?.[0];
         if (first) {
-          console.log(`No ${chain} address found — reusing: ${first.address} (${first.chain})`);
           return { data: first };
         }
       }
@@ -142,11 +112,6 @@ export class ExpressRouteTester {
     amount?: string;
     accountNumber?: string;
   }): Promise<any> {
-    console.log('\n[Step 3] Initiating Mock Wire Deposit (sandbox only)...');
-    console.log('─'.repeat(50));
-    console.log(`Tracking Ref:   ${params.trackingRef}`);
-    console.log(`Amount:         ${params.amount ?? '100.00'} USD`);
-
     try {
       const payment = await this.client.createMockWirePayment({
         trackingRef: params.trackingRef,
@@ -159,13 +124,9 @@ export class ExpressRouteTester {
         },
       });
 
-      console.log('\nMock wire deposit created:');
-      console.log(JSON.stringify(payment, null, 2));
-
       return payment;
     } catch (error: any) {
       if (error.message?.includes('already') || error.message?.includes('2023')) {
-        console.log('Mock deposit already processed for this tracking ref — skipping.');
         return null;
       }
       throw error;
@@ -179,12 +140,6 @@ export class ExpressRouteTester {
     chain?: string;
     amount?: string;
   }): Promise<any> {
-    console.log('\n[Step 4] Initiating On-Chain Deposit (sandbox mock)...');
-    console.log('─'.repeat(50));
-    console.log(`Deposit Address: ${params.address}`);
-    console.log(`Chain:           ${params.chain ?? 'ETH'}`);
-    console.log(`Amount:          ${params.amount ?? '10.00'} USDC`);
-
     try {
       const deposit = await this.client.createMockBlockchainDeposit({
         address: params.address,
@@ -195,14 +150,8 @@ export class ExpressRouteTester {
         chain: params.chain ?? 'ETH',
       });
 
-      console.log('\nOn-chain deposit simulated:');
-      console.log(JSON.stringify(deposit, null, 2));
-
       return deposit;
-    } catch (error: any) {
-      console.warn('\nNote: Mock blockchain deposit endpoint returned an error.');
-      console.warn('In production, this step is performed by the external sender.');
-      console.warn(`Details: ${error.message}`);
+    } catch {
       return null;
     }
   }
@@ -214,11 +163,6 @@ export class ExpressRouteTester {
     amount?: string;
     currency?: 'USD' | 'EUR' | 'BTC' | 'ETH';
   }): Promise<any> {
-    console.log('\n[Step 5] Initiating On-Chain Transfer...');
-    console.log('─'.repeat(50));
-    console.log(`Recipient ID: ${params.recipientId}`);
-    console.log(`Amount:       ${params.amount ?? '1.00'} ${params.currency ?? 'USD'}`);
-
     const idempotencyKey = crypto.randomUUID();
     const transfer = await this.client.createBusinessTransfer({
       idempotencyKey,
@@ -232,14 +176,6 @@ export class ExpressRouteTester {
       },
     });
 
-    console.log('\nOn-chain transfer created:');
-    console.log(JSON.stringify(transfer, null, 2));
-
-    if (transfer.data?.id) {
-      console.log(`\nTransfer ID: ${transfer.data.id}`);
-      console.log(`Status:      ${transfer.data.status}`);
-    }
-
     return transfer;
   }
 
@@ -251,12 +187,6 @@ export class ExpressRouteTester {
     currency?: 'USD' | 'EUR' | 'MXN' | 'SGD' | 'BRL';
     destinationType?: 'wire' | 'cubix' | 'pix' | 'sepa' | 'sepa_instant';
   }): Promise<any> {
-    console.log('\n[Step 6] Initiating Withdrawal to Bank...');
-    console.log('─'.repeat(50));
-    console.log(`Bank Account ID: ${params.bankAccountId}`);
-    console.log(`Amount:          ${params.amount ?? '10.00'} ${params.currency ?? 'USD'}`);
-    console.log(`Type:            ${params.destinationType ?? 'wire'}`);
-
     const idempotencyKey = crypto.randomUUID();
     const payout = await this.client.createBusinessPayout({
       idempotencyKey,
@@ -270,17 +200,6 @@ export class ExpressRouteTester {
       },
     });
 
-    console.log('\nWithdrawal created:');
-    console.log(JSON.stringify(payout, null, 2));
-
-    if (payout.data?.id) {
-      console.log(`\nPayout ID:    ${payout.data.id}`);
-      console.log(`Status:       ${payout.data.status ?? 'pending'}`);
-      if (payout.data.trackingRef) {
-        console.log(`Tracking Ref: ${payout.data.trackingRef}`);
-      }
-    }
-
     return payout;
   }
 
@@ -292,15 +211,6 @@ export class ExpressRouteTester {
     destinationType?: 'wire' | 'sepa' | 'sepa_instant';
     currency?: 'USD' | 'EUR';
   }): Promise<any> {
-    console.log('\n[Step 7] Creating Express Route...');
-    console.log('─'.repeat(50));
-    console.log(`Receipt Address ID: ${params.receiptAddressId}`);
-    console.log(`Bank Account ID:    ${params.bankAccountId}`);
-    console.log(`Type:               ${params.destinationType ?? 'wire'}`);
-    console.log(`Currency:           ${params.currency ?? 'USD'}`);
-    console.log('\nThis binds the on-chain receipt address to the bank account,');
-    console.log('enabling automatic fiat redemption on every on-chain deposit.');
-
     const idempotencyKey = crypto.randomUUID();
     try {
       const route = await this.client.createExpressRoute({
@@ -311,29 +221,21 @@ export class ExpressRouteTester {
         currency: params.currency ?? 'USD',
       });
 
-      console.log('\nExpress route created:');
-      console.log(JSON.stringify(route, null, 2));
-
       return route;
     } catch (error: any) {
       if (error.message?.includes('already') || error.message?.includes('2023')) {
-        console.log('Express route already exists — fetching existing routes...');
         try {
           const existing = await this.client.listExpressRoutes();
           const match = existing.data?.find(
             (r: any) => r.receiptAddressId === params.receiptAddressId
           ) ?? existing.data?.[0];
           if (match) {
-            console.log(`Reusing express route: ${match.id}`);
             return { data: match };
           }
         } catch {
           // list also unsupported — fall through to warning
         }
       }
-      console.warn('\nNote: Express route creation returned an error.');
-      console.warn('This may require additional account permissions or a different endpoint.');
-      console.warn(`Details: ${error.message}`);
       return null;
     }
   }
@@ -348,9 +250,6 @@ export class ExpressRouteTester {
     existingDepositAddress?: string;
     existingRecipientId?: string;
   }): Promise<void> {
-    console.log('\nExpress Route Setup Flow');
-    console.log('Automatically redeeming on-chain USDC to local fiat currency.\n');
-
     let bankAccountId = params?.existingBankId;
     let depositAddressId = params?.existingDepositAddressId;
     let depositAddress = params?.existingDepositAddress;
@@ -361,8 +260,6 @@ export class ExpressRouteTester {
       const bank = await this.linkBankAccount();
       bankAccountId = bank.data?.id;
       if (!bankAccountId) throw new Error('Failed to obtain bank account ID');
-    } else {
-      console.log(`\n[Step 1] Using existing bank account: ${bankAccountId}`);
     }
 
     // Step 2: Link receipt address
@@ -371,13 +268,9 @@ export class ExpressRouteTester {
       depositAddressId = addr.data?.id;
       depositAddress = addr.data?.address;
       if (!depositAddress) throw new Error('Failed to obtain deposit address');
-    } else {
-      console.log(`\n[Step 2] Using existing receipt address: ${depositAddress}`);
     }
 
     // Step 3: Mock wire deposit
-    // Wire instructions give us Circle's beneficiary account number — required by the mock endpoint
-    console.log('\n[Step 3 prep] Fetching wire instructions to get beneficiary account number...');
     const instructions = await this.client.getWireBankAccountInstructions(bankAccountId!);
     const beneficiaryAccountNumber = instructions.data?.beneficiaryBank?.accountNumber;
     const trackingRef = instructions.data?.trackingRef;
@@ -388,9 +281,6 @@ export class ExpressRouteTester {
     if (!beneficiaryAccountNumber) {
       throw new Error('Could not retrieve beneficiary account number from wire instructions');
     }
-
-    console.log(`  Tracking Ref:              ${trackingRef}`);
-    console.log(`  Beneficiary Account Number: ${beneficiaryAccountNumber}`);
 
     await this.initiateMockDeposit({
       trackingRef,
@@ -406,12 +296,9 @@ export class ExpressRouteTester {
     });
 
     // Step 5: On-chain transfer (requires a verified recipient)
-    let recipientId = params?.existingRecipientId;
+    const recipientId = params?.existingRecipientId;
     if (recipientId) {
       await this.initiateOnChainTransfer({ recipientId, amount: '1.00' });
-    } else {
-      console.log('\n[Step 5] Skipping on-chain transfer — no verified recipient ID provided.');
-      console.log('         Use: express-route transfer <recipient-id> [amount]');
     }
 
     // Step 6: Withdrawal
@@ -425,25 +312,14 @@ export class ExpressRouteTester {
       receiptAddressId: depositAddressId!,
       bankAccountId: bankAccountId!,
     });
-
-    console.log('\nExpress route setup complete.');
-    console.log(`  Bank Account ID:     ${bankAccountId}`);
-    console.log(`  Receipt Address:     ${depositAddress}`);
-    console.log(`  Receipt Address ID:  ${depositAddressId}`);
   }
 }
 
 // ─── CLI ───────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('╔═══════════════════════════════════════════════════════╗');
-  console.log('║     Circle Mint Express Route Tester                 ║');
-  console.log('╚═══════════════════════════════════════════════════════╝');
-  console.log(`\nEnvironment: ${config.environment}`);
-  console.log(`Base URL:    ${config.baseUrl}`);
-
   if (!config.apiKey) {
-    console.error('\nError: CIRCLE_API_KEY is not set!');
+    process.stderr.write('Error: CIRCLE_API_KEY is not set!\n');
     process.exit(1);
   }
 
@@ -469,7 +345,7 @@ async function main() {
 
       case 'mock-deposit':
         if (!args[1]) {
-          console.error('Usage: express-route mock-deposit <trackingRef> [amount] [accountNumber]');
+          process.stderr.write('Usage: express-route mock-deposit <trackingRef> [amount] [accountNumber]\n');
           process.exit(1);
         }
         await tester.initiateMockDeposit({
@@ -481,7 +357,7 @@ async function main() {
 
       case 'onchain-deposit':
         if (!args[1]) {
-          console.error('Usage: express-route onchain-deposit <address> [chain] [amount]');
+          process.stderr.write('Usage: express-route onchain-deposit <address> [chain] [amount]\n');
           process.exit(1);
         }
         await tester.initiateOnChainDeposit({
@@ -493,7 +369,7 @@ async function main() {
 
       case 'transfer':
         if (!args[1]) {
-          console.error('Usage: express-route transfer <recipient-id> [amount] [currency]');
+          process.stderr.write('Usage: express-route transfer <recipient-id> [amount] [currency]\n');
           process.exit(1);
         }
         await tester.initiateOnChainTransfer({
@@ -505,7 +381,7 @@ async function main() {
 
       case 'withdraw':
         if (!args[1]) {
-          console.error('Usage: express-route withdraw <bank-account-id> [amount] [currency]');
+          process.stderr.write('Usage: express-route withdraw <bank-account-id> [amount] [currency]\n');
           process.exit(1);
         }
         await tester.initiateWithdrawal({
@@ -517,7 +393,7 @@ async function main() {
 
       case 'create':
         if (!args[1] || !args[2]) {
-          console.error('Usage: express-route create <receipt-address-id> <bank-account-id>');
+          process.stderr.write('Usage: express-route create <receipt-address-id> <bank-account-id>\n');
           process.exit(1);
         }
         await tester.createExpressRoute({
@@ -540,28 +416,22 @@ async function main() {
         break;
 
       default:
-        console.log('\nAvailable Commands:');
-        console.log('  link-bank [accNum] [routNum]               - Step 1: Link a wire bank account');
-        console.log('  link-receipt [chain] [currency]            - Step 2: Create on-chain receipt address');
-        console.log('  mock-deposit <trackRef> [amt] [accNum]     - Step 3: Simulate a wire deposit (sandbox)');
-        console.log('  onchain-deposit <address> [chain] [amt]    - Step 4: Simulate an on-chain deposit (sandbox)');
-        console.log('  transfer <recipient-id> [amt] [currency]   - Step 5: Send on-chain transfer');
-        console.log('  withdraw <bank-id> [amt] [currency]        - Step 6: Withdraw to bank (fiat)');
-        console.log('  create <receipt-addr-id> <bank-id>         - Step 7: Create express route');
-        console.log('  run [chain] [amount] [bankId] [addrId] [addr] [recipId]');
-        console.log('                                             - Run the full flow end-to-end');
-        console.log('\nExamples:');
-        console.log('  npm run express-route link-bank');
-        console.log('  npm run express-route link-receipt ETH USD');
-        console.log('  npm run express-route mock-deposit CIR12345 100.00 12340010');
-        console.log('  npm run express-route onchain-deposit 0x123... ETH 10.00');
-        console.log('  npm run express-route transfer <recipient-id> 1.00 USD');
-        console.log('  npm run express-route withdraw <bank-id> 10.00 USD');
-        console.log('  npm run express-route create <receipt-addr-id> <bank-id>');
-        console.log('  npm run express-route run ETH 10.00');
+        process.stdout.write([
+          'Available Commands:',
+          '  link-bank [accNum] [routNum]               - Step 1: Link a wire bank account',
+          '  link-receipt [chain] [currency]            - Step 2: Create on-chain receipt address',
+          '  mock-deposit <trackRef> [amt] [accNum]     - Step 3: Simulate a wire deposit (sandbox)',
+          '  onchain-deposit <address> [chain] [amt]    - Step 4: Simulate an on-chain deposit (sandbox)',
+          '  transfer <recipient-id> [amt] [currency]   - Step 5: Send on-chain transfer',
+          '  withdraw <bank-id> [amt] [currency]        - Step 6: Withdraw to bank (fiat)',
+          '  create <receipt-addr-id> <bank-id>         - Step 7: Create express route',
+          '  run [chain] [amount] [bankId] [addrId] [addr] [recipId]',
+          '                                             - Run the full flow end-to-end',
+          '',
+        ].join('\n'));
     }
   } catch (error: any) {
-    console.error('\nFatal error:', error.message);
+    process.stderr.write(`Fatal error: ${error.message}\n`);
     process.exit(1);
   }
 }

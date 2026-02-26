@@ -66,25 +66,6 @@ export class CircleMintClient {
   }
 
   /**
-            }),
-          });
-        } catch (fallbackError: any) {
-          // Provide helpful error message
-          const errorMsg = error.message.includes('422')
-            ? 'Invalid request format. PaymentIntents may require additional fields like amount or currency.'
-            : error.message;
-          throw new Error(
-            `Deposit address creation failed: ${errorMsg}. ` +
-            `This endpoint may require account setup or additional parameters. ` +
-            `Common blockchain formats: ETH, MATIC, AVAX, etc.`
-          );
-        }
-      }
-      throw error;
-    }
-  }
-
-  /**
    * List deposit addresses
    * Note: May require account setup or use paymentIntents endpoint
    */
@@ -114,26 +95,6 @@ export class CircleMintClient {
             `the Crypto Deposits API may not be enabled for your account. ` +
             `Original error: ${error.message}`
           );
-        }
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Get deposit information
-   */
-  async getDeposit(depositId: string): Promise<any> {
-    // Try paymentIntents endpoint first
-    try {
-      return await this.request(`/v1/paymentIntents/${depositId}`);
-    } catch (error: any) {
-      // Fallback to deposits endpoint
-      if (error.message.includes('404')) {
-        try {
-          return await this.request(`/v1/deposits/${depositId}`);
-        } catch (fallbackError) {
-          throw error;
         }
       }
       throw error;
@@ -550,6 +511,13 @@ export class CircleMintClient {
     return this.request(`/v1/notifications/subscriptions/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  /**
+   * Get wallets (includes entityId and balances)
+   */
+  async getWallets(): Promise<any> {
+    return this.request('/v1/wallets');
   }
 
   /**

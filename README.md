@@ -33,7 +33,7 @@ npm run server
 
 | Section | What you can do |
 |---|---|
-| **Overview** | Check account balance, list supported chains |
+| **Overview** | View account identity (entity ID, wallet ID), check balance, list supported chains |
 | **Deposits** | List deposit addresses, create deposit addresses, list deposits |
 | **Payouts** | Manage address book recipients, send crypto payouts (USDC/EURC) |
 | **Withdrawals** | Create/list wire accounts, get wire instructions, mock wire deposits, withdraw to bank |

@@ -55,7 +55,6 @@ app.head('/webhooks', (_req: Request, res: Response) => {
 
 app.post('/webhooks', (req: Request, res: Response) => {
   const body = req.body;
-  console.log('[Webhook received]', JSON.stringify(body, null, 2));
   pushEvent('notification', {
     timestamp: new Date().toISOString(),
     payload: body,
@@ -120,6 +119,11 @@ async function send(res: Response, result: RunResult) {
 
 // ─── Overview ─────────────────────────────────────────────────────────────
 
+app.get('/api/account', asyncHandler(async (_req, res) => {
+  const client = new CircleMintClient();
+  await send(res, await run(() => client.getWallets()));
+}));
+
 app.get('/api/balance', asyncHandler(async (_req, res) => {
   const client = new CircleMintClient();
   await send(res, await run(() => client.getBalance()));
@@ -150,35 +154,41 @@ app.post('/api/deposits/addresses', asyncHandler(async (req, res) => {
 
 // ─── Payouts ──────────────────────────────────────────────────────────────
 
+// Address book routes MUST come before /api/payouts to avoid prefix conflicts
+app.get('/api/payouts/address-book', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const client = new CircleMintClient();
+    await send(res, await run(() => client.listAddressBookRecipients()));
+  } catch (err) { next(err); }
+});
+
+app.post('/api/payouts/address-book', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { chain, address, addressTag, nickname, email } = req.body;
+    const client = new CircleMintClient();
+    await send(res, await run(() => client.createAddressBookRecipient({
+      idempotencyKey: crypto.randomUUID(),
+      chain,
+      address,
+      ...(addressTag && { addressTag }),
+      metadata: {
+        ...(nickname && { nickname }),
+        ...(email && { email }),
+      },
+    })));
+  } catch (err) { next(err); }
+});
+
+app.delete('/api/payouts/address-book/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const client = new CircleMintClient();
+    await send(res, await run(() => client.deleteAddressBookRecipient(req.params.id as string)));
+  } catch (err) { next(err); }
+});
+
 app.get('/api/payouts', asyncHandler(async (_req, res) => {
   const client = new CircleMintClient();
   await send(res, await run(() => client.listPayouts()));
-}));
-
-// Address book recipients (required before creating a payout)
-app.get('/api/payouts/address-book', asyncHandler(async (_req, res) => {
-  const client = new CircleMintClient();
-  await send(res, await run(() => client.listAddressBookRecipients()));
-}));
-
-app.post('/api/payouts/address-book', asyncHandler(async (req, res) => {
-  const { chain, address, addressTag, nickname, email } = req.body;
-  const client = new CircleMintClient();
-  await send(res, await run(() => client.createAddressBookRecipient({
-    idempotencyKey: crypto.randomUUID(),
-    chain,
-    address,
-    ...(addressTag && { addressTag }),
-    metadata: {
-      ...(nickname && { nickname }),
-      ...(email && { email }),
-    },
-  })));
-}));
-
-app.delete('/api/payouts/address-book/:id', asyncHandler(async (req, res) => {
-  const client = new CircleMintClient();
-  await send(res, await run(() => client.deleteAddressBookRecipient(req.params.id as string)));
 }));
 
 app.post('/api/payouts', asyncHandler(async (req, res) => {
@@ -313,6 +323,12 @@ app.delete('/api/notifications/subscriptions/:id', asyncHandler(async (req, res)
   const client = new CircleMintClient();
   await send(res, await run(() => client.deleteSubscription(req.params.id as string)));
 }));
+
+// ─── JSON 404 fallback for unmatched /api routes ──────────────────────────
+
+app.use('/api', (_req: Request, res: Response) => {
+  res.status(404).json({ error: 'API route not found' });
+});
 
 // ─── Error handler ────────────────────────────────────────────────────────
 

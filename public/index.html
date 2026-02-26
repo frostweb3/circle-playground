@@ -505,6 +505,34 @@ body {
         <div class="section-title">Overview</div>
         <div class="section-desc">Account balance and configuration</div>
       </div>
+      <!-- Account identity card -->
+      <div class="card" id="account-info-card" style="border-color:var(--accent-glow)">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Account Identity</div>
+            <div class="card-endpoint">GET /api/account</div>
+          </div>
+          <span class="card-method method-get">GET</span>
+        </div>
+        <div class="data-list" id="account-info-rows">
+          <div class="data-row" style="justify-content:flex-start;gap:16px">
+            <span style="color:var(--text-dim);font-size:10px;min-width:80px">Entity ID</span>
+            <span id="acct-entity-id" style="color:var(--text-dim);font-size:11px">—</span>
+          </div>
+          <div class="data-row" style="justify-content:flex-start;gap:16px">
+            <span style="color:var(--text-dim);font-size:10px;min-width:80px">Wallet ID</span>
+            <span id="acct-wallet-id" style="color:var(--text-dim);font-size:11px">—</span>
+          </div>
+          <div class="data-row" style="justify-content:flex-start;gap:16px">
+            <span style="color:var(--text-dim);font-size:10px;min-width:80px">Type</span>
+            <span id="acct-type" style="color:var(--text-dim);font-size:11px">—</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="loadAccountInfo(this)">
+          <div class="spinner"></div><span class="btn-label">Load Account Info</span>
+        </button>
+      </div>
+
       <div class="cards-grid">
         <!-- Balance -->
         <div class="card">
@@ -1087,9 +1115,37 @@ function toast(msg, type = 'info') {
 }
 
 // ── API caller ────────────────────────────────────────────────────────────
+async function loadAccountInfo(btn) {
+  btn.classList.add('loading');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/account');
+    const json = await res.json();
+    const wallet = json.data?.data?.[0];
+    if (wallet) {
+      document.getElementById('acct-entity-id').textContent = wallet.entityId || '—';
+      document.getElementById('acct-entity-id').style.color = 'var(--text)';
+      document.getElementById('acct-wallet-id').textContent = wallet.walletId || '—';
+      document.getElementById('acct-wallet-id').style.color = 'var(--text)';
+      document.getElementById('acct-type').textContent = wallet.type || '—';
+      document.getElementById('acct-type').style.color = 'var(--text)';
+      log('RES', wallet, 'tag-ok');
+      toast('Account info loaded', 'success');
+    } else {
+      toast('No wallet data returned', 'error');
+    }
+  } catch (err) {
+    toast('Failed to load account info', 'error');
+    log('ERR', err.message, 'tag-err');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
 async function callApi(method, url, body, btn, badgeId) {
   // Validate required-ish fields (non-empty check on url params)
-  if (url.includes('undefined') || url.includes('null')) {
+  if (url.includes('undefined') || url.includes('null') || url.includes('//')) {
     toast('Please fill in all required fields', 'error');
     return;
   }
@@ -1110,7 +1166,14 @@ async function callApi(method, url, body, btn, badgeId) {
     }
 
     const res = await fetch(url, opts);
-    const json = await res.json();
+    let json;
+    try {
+      json = await res.json();
+    } catch {
+      log('ERR', `Server returned non-JSON response (${res.status} ${res.statusText})`, 'tag-err');
+      toast(`${label} failed`, 'error');
+      return;
+    }
 
     if (json.error) {
       log('ERR', json.error, 'tag-err');
