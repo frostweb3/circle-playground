@@ -230,15 +230,19 @@ export class AccountAndTransferTester {
   /**
    * Create a wire bank account
    */
-  async createWireBankAccount(): Promise<any> {
+  async createWireBankAccount(overrides?: {
+    accountNumber?: string;
+    routingNumber?: string;
+    billingName?: string;
+  }): Promise<any> {
     const idempotencyKey = crypto.randomUUID();
 
     const params = {
       idempotencyKey,
-      accountNumber: "12340010",
-      routingNumber: "121000248",
+      accountNumber: overrides?.accountNumber ?? "12340010",
+      routingNumber: overrides?.routingNumber ?? "121000248",
       billingDetails: {
-        name: "Satoshi Nakamoto",
+        name: overrides?.billingName ?? "Satoshi Nakamoto",
         city: "Boston",
         country: "US",
         line1: "100 Money Street",

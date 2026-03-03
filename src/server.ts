@@ -62,6 +62,17 @@ app.post('/webhooks', (req: Request, res: Response) => {
   res.sendStatus(200);
 });
 
+app.post('/api/test-notification', (_req: Request, res: Response) => {
+  pushEvent('notification', {
+    timestamp: new Date().toISOString(),
+    payload: {
+      notificationType: 'test',
+      message: 'This is a test notification from the dashboard',
+    },
+  });
+  res.json({ ok: true });
+});
+
 // ─── Utility: capture console output from tester methods ─────────────────
 
 interface RunResult {
@@ -210,9 +221,10 @@ app.get('/api/banks/wires', asyncHandler(async (_req, res) => {
   await send(res, await run(() => client.listWireBankAccounts()));
 }));
 
-app.post('/api/banks/wires', asyncHandler(async (_req, res) => {
+app.post('/api/banks/wires', asyncHandler(async (req, res) => {
+  const { accountNumber, routingNumber, billingName } = req.body;
   const tester = new AccountAndTransferTester();
-  await send(res, await run(() => tester.createWireBankAccount()));
+  await send(res, await run(() => tester.createWireBankAccount({ accountNumber, routingNumber, billingName })));
 }));
 
 app.get('/api/banks/wires/:id/instructions', asyncHandler(async (req, res) => {
