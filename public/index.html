@@ -10,25 +10,28 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0b0e17;
-  --sidebar: #0f1420;
-  --card: #131826;
-  --card-border: #1e2438;
-  --accent: #3772FF;
-  --accent-dim: rgba(55,114,255,.12);
-  --accent-glow: rgba(55,114,255,.25);
+  --bg: #07090f;
+  --sidebar: #0a0d18;
+  --card: #0f1320;
+  --card-hover: #131828;
+  --border: #1a2235;
+  --border-bright: #253045;
+  --accent: #3b7eff;
+  --accent-dim: rgba(59,126,255,.1);
+  --accent-glow: rgba(59,126,255,.22);
   --green: #00d97e;
-  --green-dim: rgba(0,217,126,.1);
-  --red: #ff4d6d;
-  --red-dim: rgba(255,77,109,.1);
-  --yellow: #ffc947;
-  --text: #e2e8f0;
-  --text-dim: #64748b;
-  --text-muted: #334155;
+  --green-dim: rgba(0,217,126,.08);
+  --red: #ff4466;
+  --red-dim: rgba(255,68,102,.08);
+  --yellow: #ffb547;
+  --text: #dde6f5;
+  --text-dim: #4d6585;
+  --text-muted: #273548;
   --mono: 'IBM Plex Mono', monospace;
   --sans: 'Syne', sans-serif;
-  --radius: 10px;
+  --radius: 12px;
   --sidebar-w: 220px;
+  --log-w: 360px;
 }
 
 html { scroll-behavior: smooth; }
@@ -37,34 +40,37 @@ body {
   color: var(--text);
   font-family: var(--mono);
   font-size: 13px;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-/* ── Layout ─────────────────────────────────────── */
+/* ── App Layout: 3-column grid ──────────────────────── */
 .app {
-  display: flex;
-  flex: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr var(--log-w);
+  height: 100vh;
   overflow: hidden;
-  height: calc(100vh - 300px);
+  transition: grid-template-columns .25s ease;
+}
+.app.log-collapsed {
+  grid-template-columns: var(--sidebar-w) 1fr 28px;
 }
 
-/* ── Sidebar ─────────────────────────────────────── */
+/* ── Sidebar ─────────────────────────────────────────── */
 .sidebar {
-  width: var(--sidebar-w);
   background: var(--sidebar);
-  border-right: 1px solid var(--card-border);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  flex-shrink: 0;
-  z-index: 10;
+  height: 100vh;
 }
 
 .logo {
   padding: 20px 18px 16px;
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--border);
 }
 .logo-wordmark {
   font-family: var(--sans);
@@ -108,7 +114,13 @@ body {
 }
 
 .nav { padding: 8px 0; flex: 1; }
-.nav-section { padding: 16px 18px 4px; font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
+.nav-section {
+  padding: 16px 18px 4px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--text-muted);
+}
 .nav-item {
   display: flex;
   align-items: center;
@@ -120,9 +132,14 @@ body {
   font-size: 12px;
   transition: all .15s;
   text-decoration: none;
+  position: relative;
 }
 .nav-item:hover { color: var(--text); background: rgba(255,255,255,.03); }
-.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+.nav-item.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: linear-gradient(90deg, var(--accent-dim) 0%, transparent 100%);
+}
 .nav-icon { font-size: 14px; width: 18px; text-align: center; }
 
 .notif-dot {
@@ -134,14 +151,14 @@ body {
 }
 .notif-dot.visible { display: block; }
 
-/* ── Main ────────────────────────────────────────── */
+/* ── Main content ────────────────────────────────────── */
 .main {
-  flex: 1;
   overflow-y: auto;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: 100vh;
 }
 
 .section { display: none; flex-direction: column; gap: 16px; }
@@ -167,18 +184,36 @@ body {
   gap: 14px;
 }
 
-/* ── Card ────────────────────────────────────────── */
+/* ── Card ────────────────────────────────────────────── */
 .card {
   background: var(--card);
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: border-color .2s;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+  position: relative;
 }
-.card:hover { border-color: #2a3050; }
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -1px;
+  width: 3px;
+  height: 100%;
+  border-radius: var(--radius) 0 0 var(--radius);
+  background: var(--border);
+  transition: background .2s;
+}
+.card.method-get-card::before { background: var(--green); }
+.card.method-post-card::before { background: var(--accent); }
+.card.method-delete-card::before { background: var(--red); }
+.card:hover {
+  border-color: var(--border-bright);
+  background: var(--card-hover);
+  box-shadow: 0 4px 24px rgba(0,0,0,.3);
+}
 
 .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .card-title {
@@ -188,19 +223,19 @@ body {
   color: #fff;
 }
 .card-method {
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 4px;
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 20px;
   letter-spacing: .06em;
   font-weight: 600;
   flex-shrink: 0;
 }
-.method-get { background: rgba(0,217,126,.15); color: var(--green); }
-.method-post { background: var(--accent-dim); color: var(--accent); }
-.method-delete { background: var(--red-dim); color: var(--red); }
+.method-get { background: rgba(0,217,126,.12); color: var(--green); border: 1px solid rgba(0,217,126,.2); }
+.method-post { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(59,126,255,.2); }
+.method-delete { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,68,102,.2); }
 .card-endpoint { font-size: 10px; color: var(--text-dim); margin-top: 2px; font-family: var(--mono); }
 
-/* ── Step Badge ──────────────────────────────────── */
+/* ── Step Badge ──────────────────────────────────────── */
 .step-badge {
   width: 26px; height: 26px;
   border-radius: 50%;
@@ -215,34 +250,79 @@ body {
 }
 .step-badge.done { background: var(--green-dim); border-color: rgba(0,217,126,.3); color: var(--green); }
 
-/* ── Form fields ─────────────────────────────────── */
+/* ── Form fields ─────────────────────────────────────── */
 .fields { display: flex; flex-direction: column; gap: 10px; }
-.field { display: flex; flex-direction: column; gap: 4px; }
+.field { display: flex; flex-direction: column; gap: 4px; position: relative; }
 .field label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em; }
+.field-row { display: flex; gap: 6px; align-items: flex-end; }
+.field-row .field { flex: 1; }
 .field input, .field select {
-  background: #0b0e17;
-  border: 1px solid var(--card-border);
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
   font-family: var(--mono);
   font-size: 12px;
-  padding: 8px 10px;
+  padding: 9px 11px;
   outline: none;
-  transition: border-color .15s;
+  transition: border-color .15s, box-shadow .15s;
   width: 100%;
 }
-.field input:focus, .field select:focus { border-color: var(--accent); }
+.field input:focus, .field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
 .field input::placeholder { color: var(--text-muted); }
-.field select option { background: #131826; }
+.field select option { background: #0f1320; }
 .required-mark { color: var(--accent); margin-left: 2px; }
 
-/* ── Buttons ─────────────────────────────────────── */
+/* Auto-fill flash animation */
+.field input.autofilled {
+  animation: autofill-flash 1.5s ease forwards;
+}
+@keyframes autofill-flash {
+  0% { border-color: var(--green); box-shadow: 0 0 0 2px rgba(0,217,126,.2); }
+  100% { border-color: var(--border); box-shadow: none; }
+}
+.autofill-hint {
+  font-size: 9px;
+  color: var(--green);
+  letter-spacing: .04em;
+  opacity: 1;
+  animation: hint-fade 3s ease forwards;
+  margin-top: 2px;
+}
+@keyframes hint-fade {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Copy button */
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 5px 8px;
+  font-size: 10px;
+  line-height: 1;
+  transition: all .15s;
+  flex-shrink: 0;
+  align-self: flex-end;
+  height: 34px;
+}
+.copy-btn:hover { border-color: var(--border-bright); color: var(--text); }
+
+/* ── Buttons ─────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 16px;
+  padding: 10px 16px;
+  min-height: 40px;
   border-radius: 7px;
   border: none;
   cursor: pointer;
@@ -257,17 +337,20 @@ body {
   background: var(--accent);
   color: #fff;
 }
-.btn-primary:hover { background: #4d85ff; box-shadow: 0 0 16px var(--accent-glow); }
+.btn-primary:hover {
+  background: #4f8eff;
+  box-shadow: 0 0 20px var(--accent-glow), 0 2px 8px rgba(59,126,255,.3);
+}
 .btn-primary:active { background: #2b5fe8; }
-.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,77,109,.2); }
-.btn-danger:hover { background: rgba(255,77,109,.2); }
-.btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--card-border); }
-.btn-ghost:hover { color: var(--text); border-color: #2a3050; }
-.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,68,102,.2); }
+.btn-danger:hover { background: rgba(255,68,102,.15); }
+.btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border-bright); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
 
 .btn-full { width: 100%; }
 
-/* ── Spinner ─────────────────────────────────────── */
+/* ── Spinner ─────────────────────────────────────────── */
 .spinner {
   width: 12px; height: 12px;
   border: 2px solid rgba(255,255,255,.2);
@@ -280,10 +363,10 @@ body {
 .btn.loading .btn-label { display: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Run All stepper ─────────────────────────────── */
+/* ── Run All stepper ─────────────────────────────────── */
 .run-all-bar {
   background: var(--card);
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px 18px;
   display: flex;
@@ -295,7 +378,7 @@ body {
 .run-all-info { font-size: 12px; color: var(--text-dim); }
 .run-all-info strong { color: var(--text); font-family: var(--sans); font-size: 14px; display: block; margin-bottom: 2px; }
 
-/* ── Notifications section ───────────────────────── */
+/* ── Notifications ───────────────────────────────────── */
 .notif-feed {
   display: flex;
   flex-direction: column;
@@ -305,7 +388,7 @@ body {
 }
 .notif-item {
   background: var(--card);
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--border);
   border-left: 3px solid var(--yellow);
   border-radius: 6px;
   padding: 10px 14px;
@@ -319,28 +402,36 @@ body {
 .notif-body { font-size: 11px; color: var(--text-dim); white-space: pre-wrap; word-break: break-all; }
 .notif-time { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
 
-/* ── Log panel ───────────────────────────────────── */
+/* ── Log panel (right side) ──────────────────────────── */
 .log-panel {
-  height: 300px;
-  background: #080a12;
-  border-top: 1px solid var(--card-border);
+  background: #070a10;
+  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+.log-panel-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 .log-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--card-border);
-  background: #0a0d18;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #09000c10;
+  flex-shrink: 0;
 }
 .log-title {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: .1em;
+  letter-spacing: .12em;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -349,31 +440,37 @@ body {
   width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--green);
-  animation: pulse 1.5s infinite;
+  transition: background .3s;
+}
+.log-blink.active { animation: log-pulse 1s ease; }
+@keyframes log-pulse {
+  0% { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 1; transform: scale(1); }
 }
 .log-body {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 16px;
+  overflow-x: hidden;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .log-entry {
   display: grid;
   grid-template-columns: auto auto 1fr;
-  gap: 12px;
+  gap: 8px;
   align-items: flex-start;
   animation: fadeIn .2s ease;
   padding: 6px 8px;
   border-radius: 5px;
-  background: rgba(255,255,255,.02);
+  background: rgba(255,255,255,.018);
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .log-ts { color: var(--text-muted); font-size: 10px; white-space: nowrap; padding-top: 1px; }
 .log-tag {
-  font-size: 10px;
+  font-size: 9px;
   padding: 1px 6px;
   border-radius: 3px;
   font-weight: 600;
@@ -383,21 +480,57 @@ body {
 .tag-err { background: var(--red-dim); color: var(--red); }
 .tag-info { background: var(--accent-dim); color: var(--accent); }
 .log-content {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text);
   white-space: pre-wrap;
   word-break: break-all;
   line-height: 1.5;
+  overflow-x: hidden;
 }
-.log-json { color: #a5c3ff; }
+.log-json { color: #7faeff; }
 
-/* ── Scrollbars ─────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* Log collapsed strip */
+.log-collapse-toggle {
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--border);
+  border: 1px solid var(--border-bright);
+  border-radius: 0 5px 5px 0;
+  width: 18px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--text-dim);
+  transition: all .15s;
+  z-index: 10;
+}
+.log-collapse-toggle:hover { color: var(--text); background: var(--border-bright); }
+
+.app.log-collapsed .log-panel-inner { opacity: 0; pointer-events: none; }
+.log-collapsed-label {
+  display: none;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(180deg);
+}
+.app.log-collapsed .log-collapsed-label { display: block; }
+
+/* ── Scrollbars ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #2a3050; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
 
-/* ── Toast ───────────────────────────────────────── */
+/* ── Toast ───────────────────────────────────────────── */
 #toast-container {
   position: fixed;
   top: 16px; right: 16px;
@@ -408,11 +541,11 @@ body {
 }
 .toast {
   background: var(--card);
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 12px;
-  max-width: 320px;
+  max-width: 300px;
   animation: slideInRight .2s ease;
   display: flex; align-items: center; gap: 8px;
 }
@@ -424,7 +557,7 @@ body {
 .toast.error { border-left: 3px solid var(--red); }
 .toast.info { border-left: 3px solid var(--accent); }
 
-/* ── Sublist for wire accounts ───────────────────── */
+/* ── Data list ───────────────────────────────────────── */
 .data-list {
   display: flex;
   flex-direction: column;
@@ -436,7 +569,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 6px 10px;
-  background: rgba(255,255,255,.03);
+  background: rgba(255,255,255,.025);
   border-radius: 5px;
   font-size: 11px;
   gap: 8px;
@@ -445,45 +578,85 @@ body {
 .data-id { color: var(--text-dim); font-size: 10px; }
 .data-status { padding: 2px 6px; border-radius: 3px; font-size: 10px; }
 .status-active, .status-complete { background: var(--green-dim); color: var(--green); }
-.status-pending { background: rgba(255,201,71,.1); color: var(--yellow); }
+.status-pending { background: rgba(255,181,71,.08); color: var(--yellow); }
 .status-failed  { background: var(--red-dim); color: var(--red); }
 
-@media (max-width: 768px) {
-  .sidebar { width: 56px; }
-  .logo-wordmark, .logo-sub, .env-badge, .nav-section, .nav-item span:not(.nav-icon) { display: none; }
-  .nav-item { padding: 12px; justify-content: center; }
+/* Info banner */
+.info-banner {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-glow);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.6;
 }
+
+.subheading {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* ── Sub-nav tabs ────────────────────────────────────────────────────────── */
+.sub-nav {
+  display: flex;
+  gap: 3px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+}
+.sub-nav-item {
+  flex: 1;
+  text-align: center;
+  padding: 9px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--text-dim);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all .15s;
+}
+.sub-nav-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.sub-nav-item.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent-glow);
+}
+.subsection { display: none; flex-direction: column; gap: 16px; }
+.subsection.active { display: flex; }
 </style>
 </head>
 <body>
 
 <div id="toast-container"></div>
 
-<div class="app">
-  <!-- Sidebar -->
+<div class="app" id="app">
+  <!-- ── Sidebar ── -->
   <nav class="sidebar">
     <div class="logo">
-      <div class="logo-wordmark">Circle Mint</div>
+      <img src="https://cdn.brandfetch.io/iduqAVaA_O/theme/light/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1668070495470" alt="Circle" style="height:22px;margin-bottom:6px;display:block;filter:brightness(0) invert(1)">
       <div class="logo-sub">Dev Dashboard</div>
     </div>
     <div class="env-badge" id="env-badge">sandbox</div>
     <div class="nav">
       <div class="nav-section">Core</div>
-      <a class="nav-item active" data-section="overview" href="#">
-        <span class="nav-icon">◈</span><span>Overview</span>
+      <a class="nav-item active" data-section="account" href="#">
+        <span class="nav-icon">◈</span><span>Account</span>
       </a>
-      <a class="nav-item" data-section="deposits" href="#">
-        <span class="nav-icon">↓</span><span>Deposits</span>
+      <a class="nav-item" data-section="fund" href="#">
+        <span class="nav-icon">↓</span><span>Fund</span>
       </a>
-      <a class="nav-item" data-section="payouts" href="#">
-        <span class="nav-icon">↑</span><span>Payouts</span>
+      <a class="nav-item" data-section="send" href="#">
+        <span class="nav-icon">↑</span><span>Send</span>
       </a>
-      <div class="nav-section">Banking</div>
-      <a class="nav-item" data-section="withdrawals" href="#">
-        <span class="nav-icon">🏦</span><span>Withdrawals</span>
-      </a>
-      <a class="nav-item" data-section="transfers" href="#">
-        <span class="nav-icon">⇄</span><span>Transfers</span>
+      <a class="nav-item" data-section="withdraw" href="#">
+        <span class="nav-icon">🏦</span><span>Withdraw</span>
       </a>
       <div class="nav-section">Advanced</div>
       <a class="nav-item" data-section="express" href="#">
@@ -496,17 +669,16 @@ body {
     </div>
   </nav>
 
-  <!-- Main content -->
+  <!-- ── Main content ── -->
   <main class="main">
 
-    <!-- ── Overview ── -->
-    <div class="section active" id="section-overview">
+    <!-- ── Account ── -->
+    <div class="section active" id="section-account">
       <div class="section-header">
-        <div class="section-title">Overview</div>
-        <div class="section-desc">Account balance and configuration</div>
+        <div class="section-title">Account</div>
+        <div class="section-desc">Account identity, balance, and configuration</div>
       </div>
-      <!-- Account identity card -->
-      <div class="card" id="account-info-card" style="border-color:var(--accent-glow)">
+      <div class="card method-get-card" id="account-info-card" style="border-color:var(--accent-glow)">
         <div class="card-header">
           <div>
             <div class="card-title">Account Identity</div>
@@ -534,8 +706,7 @@ body {
       </div>
 
       <div class="cards-grid">
-        <!-- Balance -->
-        <div class="card">
+        <div class="card method-get-card">
           <div class="card-header">
             <div>
               <div class="card-title">Get Balance</div>
@@ -547,8 +718,7 @@ body {
             <div class="spinner"></div><span class="btn-label">Fetch Balance</span>
           </button>
         </div>
-        <!-- Chains -->
-        <div class="card">
+        <div class="card method-get-card">
           <div class="card-header">
             <div>
               <div class="card-title">Supported Chains</div>
@@ -563,32 +733,16 @@ body {
       </div>
     </div>
 
-    <!-- ── Deposits ── -->
-    <div class="section" id="section-deposits">
+    <!-- ── Fund ── -->
+    <div class="section" id="section-fund">
       <div class="section-header">
-        <div class="section-title">Deposits</div>
-        <div class="section-desc">Manage on-chain deposit addresses and incoming deposits</div>
+        <div class="section-title">Fund</div>
+        <div class="section-desc">On-chain deposit addresses and wire transfers in</div>
       </div>
+
+      <div class="subheading">On-Chain</div>
       <div class="cards-grid">
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">List Deposits</div><div class="card-endpoint">GET /api/deposits</div></div>
-            <span class="card-method method-get">GET</span>
-          </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/deposits',null,this)">
-            <div class="spinner"></div><span class="btn-label">List Deposits</span>
-          </button>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">List Deposit Addresses</div><div class="card-endpoint">GET /api/deposits/addresses</div></div>
-            <span class="card-method method-get">GET</span>
-          </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/deposits/addresses',null,this)">
-            <div class="spinner"></div><span class="btn-label">List Addresses</span>
-          </button>
-        </div>
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div><div class="card-title">Create Deposit Address</div><div class="card-endpoint">POST /api/deposits/addresses</div></div>
             <span class="card-method method-post">POST</span>
@@ -597,228 +751,299 @@ body {
             <div class="field">
               <label>Chain<span class="required-mark">*</span></label>
               <select id="dep-chain">
-                <option value="ETH">ETH</option><option value="MATIC">MATIC</option>
-                <option value="AVAX">AVAX</option><option value="BASE">BASE</option>
-                <option value="ARB">ARB</option><option value="SOL">SOL</option>
-                <option value="BTC">BTC</option>
+                <option value="">— loading chains… —</option>
               </select>
             </div>
             <div class="field">
               <label>Currency</label>
-              <input id="dep-currency" value="USD" placeholder="USD">
+              <select id="dep-currency"><option value="USD">USD (USDC)</option><option value="EUR">EUR (EURC)</option></select>
             </div>
           </div>
           <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/deposits/addresses',{chain:v('dep-chain'),currency:v('dep-currency')||'USD'},this)">
             <div class="spinner"></div><span class="btn-label">Create Address</span>
           </button>
         </div>
-      </div>
-    </div>
-
-    <!-- ── Payouts ── -->
-    <div class="section" id="section-payouts">
-      <div class="section-header">
-        <div class="section-title">Payouts</div>
-        <div class="section-desc">Send crypto payouts — addresses must be added to the address book first</div>
-      </div>
-
-      <div style="background:var(--accent-dim);border:1px solid var(--accent-glow);border-radius:var(--radius);padding:12px 16px;font-size:11px;color:var(--text-dim);line-height:1.6">
-        <strong style="color:var(--accent)">Two-step flow:</strong>
-        Step 1 — add the destination address to your <strong>Address Book</strong>.
-        Step 2 — create a payout using that entry's <strong>Recipient ID</strong>.
-        Amounts are automatically formatted to 2 decimal places.
-      </div>
-
-      <div style="font-family:var(--sans);font-size:14px;font-weight:600;color:var(--text-dim);margin-top:4px">Step 1 — Address Book</div>
-      <div class="cards-grid">
-        <div class="card">
+        <div class="card method-get-card">
           <div class="card-header">
-            <div><div class="card-title">List Address Book</div><div class="card-endpoint">GET /api/payouts/address-book</div></div>
+            <div><div class="card-title">List Deposit Addresses</div><div class="card-endpoint">GET /api/deposits/addresses</div></div>
             <span class="card-method method-get">GET</span>
           </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/payouts/address-book',null,this)">
-            <div class="spinner"></div><span class="btn-label">List Recipients</span>
+          <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/deposits/addresses',null,this)">
+            <div class="spinner"></div><span class="btn-label">List Addresses</span>
           </button>
         </div>
-        <div class="card">
+        <div class="card method-get-card">
           <div class="card-header">
-            <div><div class="card-title">Add to Address Book</div><div class="card-endpoint">POST /api/payouts/address-book</div></div>
-            <span class="card-method method-post">POST</span>
+            <div><div class="card-title">List Deposits</div><div class="card-endpoint">GET /api/deposits</div></div>
+            <span class="card-method method-get">GET</span>
           </div>
-          <div class="fields">
-            <div class="field"><label>Chain<span class="required-mark">*</span></label>
-              <select id="ab-chain"><option>ETH</option><option>MATIC</option><option>AVAX</option><option>BASE</option><option>ARB</option><option>SOL</option><option>BTC</option></select>
-            </div>
-            <div class="field"><label>Address<span class="required-mark">*</span></label><input id="ab-address" placeholder="0x..."></div>
-            <div class="field"><label>Nickname</label><input id="ab-nickname" placeholder="My wallet"></div>
-            <div class="field"><label>Address Tag <em style="color:var(--text-muted)">(XLM, HBAR etc.)</em></label><input id="ab-tag" placeholder="optional memo"></div>
-          </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/payouts/address-book',{chain:v('ab-chain'),address:v('ab-address'),nickname:v('ab-nickname')||undefined,addressTag:v('ab-tag')||undefined},this)">
-            <div class="spinner"></div><span class="btn-label">Add Recipient</span>
-          </button>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">Remove from Address Book</div><div class="card-endpoint">DELETE /api/payouts/address-book/:id</div></div>
-            <span class="card-method method-delete">DELETE</span>
-          </div>
-          <div class="fields">
-            <div class="field"><label>Recipient ID<span class="required-mark">*</span></label><input id="ab-del-id" placeholder="uuid"></div>
-          </div>
-          <button class="btn btn-danger btn-full" onclick="callApi('DELETE',`/api/payouts/address-book/${v('ab-del-id')}`,null,this)">
-            <div class="spinner"></div><span class="btn-label">Remove</span>
+          <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/deposits',null,this)">
+            <div class="spinner"></div><span class="btn-label">List Deposits</span>
           </button>
         </div>
       </div>
 
-      <div style="font-family:var(--sans);font-size:14px;font-weight:600;color:var(--text-dim);margin-top:8px">Step 2 — Send Payout</div>
+      <div class="subheading" style="margin-top:8px">Wire</div>
       <div class="cards-grid">
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">List Payouts</div><div class="card-endpoint">GET /api/payouts</div></div>
-            <span class="card-method method-get">GET</span>
-          </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/payouts',null,this)">
-            <div class="spinner"></div><span class="btn-label">List Payouts</span>
-          </button>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">Create Payout</div><div class="card-endpoint">POST /api/payouts</div></div>
-            <span class="card-method method-post">POST</span>
-          </div>
-          <div class="fields">
-            <div class="field"><label>Recipient ID <em style="color:var(--text-muted)">(from address book)</em><span class="required-mark">*</span></label><input id="po-recip" placeholder="uuid"></div>
-            <div class="field"><label>Amount<span class="required-mark">*</span></label><input id="po-amount" placeholder="1.00" title="Formatted to 2 decimal places automatically"></div>
-            <div class="field"><label>Currency</label>
-              <select id="po-currency"><option value="USD">USD (USDC)</option><option value="EUR">EUR (EURC)</option></select>
-            </div>
-          </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/payouts',{recipientId:v('po-recip'),amount:v('po-amount'),currency:v('po-currency')},this)">
-            <div class="spinner"></div><span class="btn-label">Create Payout</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Withdrawals ── -->
-    <div class="section" id="section-withdrawals">
-      <div class="section-header">
-        <div class="section-title">Withdrawals</div>
-        <div class="section-desc">Wire bank accounts and fiat offramp payouts</div>
-      </div>
-      <div class="cards-grid">
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">List Wire Accounts</div><div class="card-endpoint">GET /api/banks/wires</div></div>
-            <span class="card-method method-get">GET</span>
-          </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/banks/wires',null,this)">
-            <div class="spinner"></div><span class="btn-label">List Accounts</span>
-          </button>
-        </div>
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div><div class="card-title">Create Wire Account</div><div class="card-endpoint">POST /api/banks/wires</div></div>
             <span class="card-method method-post">POST</span>
           </div>
-          <p style="font-size:11px;color:var(--text-dim)">Uses sandbox test data (Satoshi Nakamoto, routing 121000248)</p>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/banks/wires',{},this)">
+          <div class="fields">
+            <div class="field"><label>Account Number</label><input id="cw-acct" value="12340010"></div>
+            <div class="field"><label>Routing Number</label><input id="cw-routing" value="121000248"></div>
+            <div class="field"><label>Billing Name</label><input id="cw-name" value="Satoshi Nakamoto"></div>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/banks/wires',{accountNumber:v('cw-acct'),routingNumber:v('cw-routing'),billingName:v('cw-name')},this,'','create-wire')">
             <div class="spinner"></div><span class="btn-label">Create Account</span>
           </button>
         </div>
-        <div class="card">
+        <div class="card method-get-card">
+          <div class="card-header">
+            <div><div class="card-title">List Wire Accounts</div><div class="card-endpoint">GET /api/banks/wires</div></div>
+            <span class="card-method method-get">GET</span>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/banks/wires',null,this,'','list-wires')">
+            <div class="spinner"></div><span class="btn-label">List Accounts</span>
+          </button>
+        </div>
+        <div class="card method-get-card">
           <div class="card-header">
             <div><div class="card-title">Get Wire Instructions</div><div class="card-endpoint">GET /api/banks/wires/:id/instructions</div></div>
             <span class="card-method method-get">GET</span>
           </div>
           <div class="fields">
-            <div class="field"><label>Bank Account ID<span class="required-mark">*</span></label><input id="wi-id" placeholder="uuid"></div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between">
+                <span>Bank Account<span class="required-mark">*</span></span>
+                <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadWireAccountsSelect()">↻ Refresh</button>
+              </label>
+              <select id="wi-bank-select" onchange="document.getElementById('wi-id').value=this.value" style="margin-bottom:4px">
+                <option value="">— select wire account —</option>
+              </select>
+              <input id="wi-id" placeholder="or paste UUID manually" style="font-size:11px">
+            </div>
           </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('GET',`/api/banks/wires/${v('wi-id')}/instructions`,null,this)">
+          <button class="btn btn-primary btn-full" onclick="callApi('GET',`/api/banks/wires/${v('wi-id')||document.getElementById('wi-bank-select').value}/instructions`,null,this,'','wire-instructions')">
             <div class="spinner"></div><span class="btn-label">Get Instructions</span>
           </button>
         </div>
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div><div class="card-title">Mock Wire Deposit</div><div class="card-endpoint">POST /api/mocks/wire</div></div>
             <span class="card-method method-post">POST</span>
           </div>
           <div class="fields">
-            <div class="field"><label>Tracking Ref<span class="required-mark">*</span></label><input id="mw-ref" placeholder="CIR..."></div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between">
+                <span>Load from Bank</span>
+                <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadWireAccountsSelect()">↻ Refresh</button>
+              </label>
+              <select id="mw-bank-select" onchange="loadWireInstructionsIntoForm(this.value)">
+                <option value="">— select bank to load instructions —</option>
+              </select>
+            </div>
+            <div class="field"><label>Tracking Ref<span class="required-mark">*</span></label><input id="mw-ref" placeholder="auto-filled from instructions"></div>
             <div class="field"><label>Amount</label><input id="mw-amount" value="100.00"></div>
-            <div class="field"><label>Beneficiary Account #<span class="required-mark">*</span></label><input id="mw-acct" placeholder="From wire instructions"></div>
+            <div class="field"><label>Beneficiary Account #<span class="required-mark">*</span></label><input id="mw-acct" placeholder="auto-filled from instructions"></div>
           </div>
           <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/mocks/wire',{trackingRef:v('mw-ref'),amount:v('mw-amount')||'100.00',accountNumber:v('mw-acct')},this)">
             <div class="spinner"></div><span class="btn-label">Simulate Deposit</span>
           </button>
         </div>
-        <div class="card">
+      </div>
+    </div>
+
+    <!-- ── Send ── -->
+    <div class="section" id="section-send">
+      <div class="section-header">
+        <div class="section-title">Send</div>
+        <div class="section-desc">Crypto payouts and on-chain business transfers</div>
+      </div>
+
+      <div class="sub-nav">
+        <a class="sub-nav-item active" data-subsection="payouts" href="#">Crypto Payouts</a>
+        <a class="sub-nav-item" data-subsection="transfers" href="#">Business Transfers</a>
+      </div>
+
+      <!-- ── Crypto Payouts ── -->
+      <div class="subsection active" id="subsection-payouts">
+        <div class="info-banner">
+          <strong style="color:var(--accent)">Two-step flow:</strong>
+          Add a destination address to your <strong>Address Book</strong>, then create a payout using that entry's <strong>Recipient ID</strong>.
+          Amounts are automatically formatted to 2 decimal places.
+        </div>
+        <div class="cards-grid">
+          <div class="card method-get-card">
+            <div class="card-header">
+              <div><div class="card-title">List Address Book</div><div class="card-endpoint">GET /api/payouts/address-book</div></div>
+              <span class="card-method method-get">GET</span>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/payouts/address-book',null,this)">
+              <div class="spinner"></div><span class="btn-label">List Recipients</span>
+            </button>
+          </div>
+          <div class="card method-post-card">
+            <div class="card-header">
+              <div><div class="card-title">Add to Address Book</div><div class="card-endpoint">POST /api/payouts/address-book</div></div>
+              <span class="card-method method-post">POST</span>
+            </div>
+            <div class="fields">
+              <div class="field"><label>Chain<span class="required-mark">*</span></label>
+                <select id="ab-chain"><option>ETH</option><option>AVAX</option><option>BASE</option><option>ARB</option><option>POLY</option><option>SOL</option><option>BTC</option></select>
+              </div>
+              <div class="field"><label>Address<span class="required-mark">*</span></label><input id="ab-address" placeholder="0x..."></div>
+              <div class="field"><label>Nickname</label><input id="ab-nickname" placeholder="My wallet"></div>
+              <div class="field"><label>Address Tag <em style="color:var(--text-muted)">(XLM, HBAR etc.)</em></label><input id="ab-tag" placeholder="optional memo"></div>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/payouts/address-book',{chain:v('ab-chain'),address:v('ab-address'),nickname:v('ab-nickname')||undefined,addressTag:v('ab-tag')||undefined},this,null,'add-address-book')">
+              <div class="spinner"></div><span class="btn-label">Add Recipient</span>
+            </button>
+          </div>
+          <div class="card method-delete-card">
+            <div class="card-header">
+              <div><div class="card-title">Remove from Address Book</div><div class="card-endpoint">DELETE /api/payouts/address-book/:id</div></div>
+              <span class="card-method method-delete">DELETE</span>
+            </div>
+            <div class="fields">
+              <div class="field">
+                <label>Recipient ID<span class="required-mark">*</span></label>
+                <div class="field-row">
+                  <div class="field" style="gap:0"><input id="ab-del-id" placeholder="uuid"></div>
+                  <button class="copy-btn" onclick="copyField('ab-del-id')" title="Copy value">&#9112;</button>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-danger btn-full" onclick="callApi('DELETE',`/api/payouts/address-book/${v('ab-del-id')}`,null,this)">
+              <div class="spinner"></div><span class="btn-label">Remove</span>
+            </button>
+          </div>
+          <div class="card method-get-card">
+            <div class="card-header">
+              <div><div class="card-title">List Payouts</div><div class="card-endpoint">GET /api/payouts</div></div>
+              <span class="card-method method-get">GET</span>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/payouts',null,this)">
+              <div class="spinner"></div><span class="btn-label">List Payouts</span>
+            </button>
+          </div>
+          <div class="card method-post-card">
+            <div class="card-header">
+              <div><div class="card-title">Create Payout</div><div class="card-endpoint">POST /api/payouts</div></div>
+              <span class="card-method method-post">POST</span>
+            </div>
+            <div class="fields">
+              <div class="field">
+                <label style="display:flex;align-items:center;justify-content:space-between">
+                  <span>Recipient<span class="required-mark">*</span></span>
+                  <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadAddressBookSelect()">↻ Refresh</button>
+                </label>
+                <select id="po-recip-select" onchange="document.getElementById('po-recip').value=this.value" style="margin-bottom:4px">
+                  <option value="">— select from address book —</option>
+                </select>
+                <input id="po-recip" placeholder="or paste UUID manually" style="font-size:11px">
+              </div>
+              <div class="field"><label>Amount<span class="required-mark">*</span></label><input id="po-amount" placeholder="1.00" title="Formatted to 2 decimal places automatically"></div>
+              <div class="field"><label>Currency</label>
+                <select id="po-currency"><option value="USD">USD (USDC)</option><option value="EUR">EUR (EURC)</option></select>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/payouts',{recipientId:v('po-recip')||document.getElementById('po-recip-select').value,amount:v('po-amount'),currency:v('po-currency')},this)">
+              <div class="spinner"></div><span class="btn-label">Create Payout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Business Transfers ── -->
+      <div class="subsection" id="subsection-transfers">
+        <div class="cards-grid">
+          <div class="card method-get-card">
+            <div class="card-header">
+              <div><div class="card-title">List Recipients</div><div class="card-endpoint">GET /api/recipients</div></div>
+              <span class="card-method method-get">GET</span>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/recipients',null,this)">
+              <div class="spinner"></div><span class="btn-label">List Recipients</span>
+            </button>
+          </div>
+          <div class="card method-post-card">
+            <div class="card-header">
+              <div><div class="card-title">Create Recipient</div><div class="card-endpoint">POST /api/recipients</div></div>
+              <span class="card-method method-post">POST</span>
+            </div>
+            <div class="fields">
+              <div class="field"><label>Chain<span class="required-mark">*</span></label>
+                <select id="cr-chain"><option>ETH</option><option>AVAX</option><option>BASE</option><option>ARB</option><option>POLY</option><option>SOL</option></select>
+              </div>
+              <div class="field"><label>Address<span class="required-mark">*</span></label><input id="cr-address" placeholder="0x..."></div>
+              <div class="field"><label>Description<span class="required-mark">*</span></label><input id="cr-desc" placeholder="My wallet"></div>
+              <div class="field"><label>Address Tag <em style="color:var(--text-muted)">(optional)</em></label><input id="cr-tag" placeholder="For XLM, HBAR etc."></div>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/recipients',{chain:v('cr-chain'),address:v('cr-address'),description:v('cr-desc'),addressTag:v('cr-tag')||undefined},this,'','create-recipient')">
+              <div class="spinner"></div><span class="btn-label">Create Recipient</span>
+            </button>
+          </div>
+          <div class="card method-post-card">
+            <div class="card-header">
+              <div><div class="card-title">Business Transfer</div><div class="card-endpoint">POST /api/transfers/business</div></div>
+              <span class="card-method method-post">POST</span>
+            </div>
+            <div class="fields">
+              <div class="field">
+                <label style="display:flex;align-items:center;justify-content:space-between">
+                  <span>Recipient<span class="required-mark">*</span></span>
+                  <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadRecipientsSelect()">↻ Refresh</button>
+                </label>
+                <select id="bt-recip-select" onchange="document.getElementById('bt-recip').value=this.value" style="margin-bottom:4px">
+                  <option value="">— select recipient —</option>
+                </select>
+                <input id="bt-recip" placeholder="or paste UUID manually" style="font-size:11px">
+              </div>
+              <div class="field"><label>Amount</label><input id="bt-amount" value="1.00"></div>
+              <div class="field"><label>Currency</label>
+                <select id="bt-currency"><option>USD</option></select>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/transfers/business',{recipientId:v('bt-recip')||document.getElementById('bt-recip-select').value,amount:v('bt-amount')||'1.00',currency:v('bt-currency')},this)">
+              <div class="spinner"></div><span class="btn-label">Send Transfer</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Withdraw ── -->
+    <div class="section" id="section-withdraw">
+      <div class="section-header">
+        <div class="section-title">Withdraw</div>
+        <div class="section-desc">Send fiat to your bank via wire</div>
+      </div>
+      <div class="cards-grid">
+        <div class="card method-post-card">
           <div class="card-header">
             <div><div class="card-title">Withdraw to Bank</div><div class="card-endpoint">POST /api/payouts/wire</div></div>
             <span class="card-method method-post">POST</span>
           </div>
           <div class="fields">
-            <div class="field"><label>Bank Account ID<span class="required-mark">*</span></label><input id="wd-bankid" placeholder="uuid"></div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between">
+                <span>Bank Account<span class="required-mark">*</span></span>
+                <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadWireAccountsSelect()">↻ Refresh</button>
+              </label>
+              <select id="wd-bank-select" onchange="document.getElementById('wd-bankid').value=this.value" style="margin-bottom:4px">
+                <option value="">— select wire account —</option>
+              </select>
+              <input id="wd-bankid" placeholder="or paste UUID manually" style="font-size:11px">
+            </div>
             <div class="field"><label>Amount<span class="required-mark">*</span></label><input id="wd-amount" placeholder="100.00"></div>
             <div class="field"><label>Currency</label>
               <select id="wd-currency"><option>USD</option><option>EUR</option><option>MXN</option><option>SGD</option><option>BRL</option></select>
             </div>
           </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/payouts/wire',{bankId:v('wd-bankid'),amount:v('wd-amount'),currency:v('wd-currency')},this)">
+          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/payouts/wire',{bankId:v('wd-bankid')||document.getElementById('wd-bank-select').value,amount:v('wd-amount'),currency:v('wd-currency')},this)">
             <div class="spinner"></div><span class="btn-label">Withdraw</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Transfers ── -->
-    <div class="section" id="section-transfers">
-      <div class="section-header">
-        <div class="section-title">Transfers</div>
-        <div class="section-desc">Recipient addresses and on-chain business transfers</div>
-      </div>
-      <div class="cards-grid">
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">List Recipients</div><div class="card-endpoint">GET /api/recipients</div></div>
-            <span class="card-method method-get">GET</span>
-          </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('GET','/api/recipients',null,this)">
-            <div class="spinner"></div><span class="btn-label">List Recipients</span>
-          </button>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">Create Recipient</div><div class="card-endpoint">POST /api/recipients</div></div>
-            <span class="card-method method-post">POST</span>
-          </div>
-          <div class="fields">
-            <div class="field"><label>Chain<span class="required-mark">*</span></label>
-              <select id="cr-chain"><option>ETH</option><option>MATIC</option><option>AVAX</option><option>BASE</option><option>ARB</option><option>SOL</option></select>
-            </div>
-            <div class="field"><label>Address<span class="required-mark">*</span></label><input id="cr-address" placeholder="0x..."></div>
-            <div class="field"><label>Description<span class="required-mark">*</span></label><input id="cr-desc" placeholder="My wallet"></div>
-            <div class="field"><label>Address Tag <em style="color:var(--text-muted)">(optional)</em></label><input id="cr-tag" placeholder="For XLM, HBAR etc."></div>
-          </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/recipients',{chain:v('cr-chain'),address:v('cr-address'),description:v('cr-desc'),addressTag:v('cr-tag')||undefined},this)">
-            <div class="spinner"></div><span class="btn-label">Create Recipient</span>
-          </button>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">Business Transfer</div><div class="card-endpoint">POST /api/transfers/business</div></div>
-            <span class="card-method method-post">POST</span>
-          </div>
-          <div class="fields">
-            <div class="field"><label>Recipient ID<span class="required-mark">*</span></label><input id="bt-recip" placeholder="uuid"></div>
-            <div class="field"><label>Amount</label><input id="bt-amount" value="1.00"></div>
-            <div class="field"><label>Currency</label>
-              <select id="bt-currency"><option>USD</option><option>EUR</option><option>BTC</option><option>ETH</option></select>
-            </div>
-          </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/transfers/business',{recipientId:v('bt-recip'),amount:v('bt-amount')||'1.00',currency:v('bt-currency')},this)">
-            <div class="spinner"></div><span class="btn-label">Send Transfer</span>
           </button>
         </div>
       </div>
@@ -846,14 +1071,14 @@ body {
             <input id="run-amount" value="10.00" style="min-width:80px">
           </div>
           <button class="btn btn-primary" style="margin-top:16px" onclick="callApi('POST','/api/express-route/run',{chain:v('run-chain'),amount:v('run-amount')||'10.00'},this)">
-            <div class="spinner"></div><span class="btn-label">⚡ Run All Steps</span>
+            <div class="spinner"></div><span class="btn-label">&#9889; Run All Steps</span>
           </button>
         </div>
       </div>
 
       <div class="cards-grid">
         <!-- Step 1 -->
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div style="display:flex;align-items:center;gap:10px">
               <div class="step-badge" id="step-1-badge">1</div>
@@ -865,12 +1090,12 @@ body {
             <div class="field"><label>Account Number</label><input id="s1-acct" value="12340010"></div>
             <div class="field"><label>Routing Number</label><input id="s1-route" value="121000248"></div>
           </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/link-bank',{accountNumber:v('s1-acct'),routingNumber:v('s1-route')},this,'step-1-badge')">
+          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/link-bank',{accountNumber:v('s1-acct'),routingNumber:v('s1-route')},this,'step-1-badge','er-link-bank')">
             <div class="spinner"></div><span class="btn-label">Link Bank</span>
           </button>
         </div>
         <!-- Step 2 -->
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div style="display:flex;align-items:center;gap:10px">
               <div class="step-badge" id="step-2-badge">2</div>
@@ -882,14 +1107,16 @@ body {
             <div class="field"><label>Chain</label>
               <select id="s2-chain"><option>ETH</option><option>MATIC</option><option>AVAX</option><option>BASE</option><option>ARB</option><option>SOL</option></select>
             </div>
-            <div class="field"><label>Currency</label><input id="s2-currency" value="USD"></div>
+            <div class="field"><label>Currency</label>
+              <select id="s2-currency"><option value="USD">USD (USDC)</option><option value="EUR">EUR (EURC)</option></select>
+            </div>
           </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/link-receipt',{chain:v('s2-chain'),currency:v('s2-currency')||'USD'},this,'step-2-badge')">
+          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/link-receipt',{chain:v('s2-chain'),currency:v('s2-currency')||'USD'},this,'step-2-badge','er-link-receipt')">
             <div class="spinner"></div><span class="btn-label">Link Receipt Address</span>
           </button>
         </div>
         <!-- Step 3 -->
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div style="display:flex;align-items:center;gap:10px">
               <div class="step-badge" id="step-3-badge">3</div>
@@ -898,16 +1125,25 @@ body {
             <span class="card-method method-post">POST</span>
           </div>
           <div class="fields">
-            <div class="field"><label>Tracking Ref<span class="required-mark">*</span></label><input id="s3-ref" placeholder="From wire instructions"></div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between">
+                <span>Load from Bank</span>
+                <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadWireAccountsSelect()">↻ Refresh</button>
+              </label>
+              <select id="s3-bank-select" onchange="loadWireInstructionsForStep3(this.value)">
+                <option value="">— select bank to load instructions —</option>
+              </select>
+            </div>
+            <div class="field"><label>Tracking Ref<span class="required-mark">*</span></label><input id="s3-ref" placeholder="auto-filled from instructions"></div>
             <div class="field"><label>Amount</label><input id="s3-amount" value="100.00"></div>
-            <div class="field"><label>Beneficiary Acct #<span class="required-mark">*</span></label><input id="s3-acct" placeholder="From wire instructions"></div>
+            <div class="field"><label>Beneficiary Acct #<span class="required-mark">*</span></label><input id="s3-acct" placeholder="auto-filled from instructions"></div>
           </div>
           <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/mock-deposit',{trackingRef:v('s3-ref'),amount:v('s3-amount')||'100.00',accountNumber:v('s3-acct')},this,'step-3-badge')">
             <div class="spinner"></div><span class="btn-label">Simulate Deposit</span>
           </button>
         </div>
         <!-- Step 4 -->
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div style="display:flex;align-items:center;gap:10px">
               <div class="step-badge" id="step-4-badge">4</div>
@@ -917,7 +1153,9 @@ body {
           </div>
           <div class="fields">
             <div class="field"><label>Deposit Address<span class="required-mark">*</span></label><input id="s4-addr" placeholder="0x..."></div>
-            <div class="field"><label>Chain</label><input id="s4-chain" value="ETH"></div>
+            <div class="field"><label>Chain</label>
+              <select id="s4-chain"><option>ETH</option><option>MATIC</option><option>AVAX</option><option>BASE</option><option>ARB</option><option>SOL</option><option>BTC</option></select>
+            </div>
             <div class="field"><label>Amount</label><input id="s4-amount" value="10.00"></div>
           </div>
           <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/onchain-deposit',{address:v('s4-addr'),chain:v('s4-chain')||'ETH',amount:v('s4-amount')||'10.00'},this,'step-4-badge')">
@@ -925,7 +1163,7 @@ body {
           </button>
         </div>
         <!-- Step 5 -->
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div style="display:flex;align-items:center;gap:10px">
               <div class="step-badge" id="step-5-badge">5</div>
@@ -934,18 +1172,27 @@ body {
             <span class="card-method method-post">POST</span>
           </div>
           <div class="fields">
-            <div class="field"><label>Recipient ID<span class="required-mark">*</span></label><input id="s5-recip" placeholder="uuid"></div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between">
+                <span>Recipient<span class="required-mark">*</span></span>
+                <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadRecipientsSelect()">↻ Refresh</button>
+              </label>
+              <select id="s5-recip-select" onchange="document.getElementById('s5-recip').value=this.value" style="margin-bottom:4px">
+                <option value="">— select recipient —</option>
+              </select>
+              <input id="s5-recip" placeholder="or paste UUID manually" style="font-size:11px">
+            </div>
             <div class="field"><label>Amount</label><input id="s5-amount" value="1.00"></div>
             <div class="field"><label>Currency</label>
-              <select id="s5-currency"><option>USD</option><option>EUR</option><option>BTC</option><option>ETH</option></select>
+              <select id="s5-currency"><option>USD</option></select>
             </div>
           </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/transfer',{recipientId:v('s5-recip'),amount:v('s5-amount')||'1.00',currency:v('s5-currency')},this,'step-5-badge')">
+          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/transfer',{recipientId:v('s5-recip')||document.getElementById('s5-recip-select').value,amount:v('s5-amount')||'1.00',currency:v('s5-currency')},this,'step-5-badge')">
             <div class="spinner"></div><span class="btn-label">Send Transfer</span>
           </button>
         </div>
         <!-- Step 6 -->
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div style="display:flex;align-items:center;gap:10px">
               <div class="step-badge" id="step-6-badge">6</div>
@@ -954,18 +1201,27 @@ body {
             <span class="card-method method-post">POST</span>
           </div>
           <div class="fields">
-            <div class="field"><label>Bank Account ID<span class="required-mark">*</span></label><input id="s6-bank" placeholder="uuid"></div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between">
+                <span>Bank Account<span class="required-mark">*</span></span>
+                <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadWireAccountsSelect()">↻ Refresh</button>
+              </label>
+              <select id="s6-bank-select" onchange="document.getElementById('s6-bank').value=this.value" style="margin-bottom:4px">
+                <option value="">— select wire account —</option>
+              </select>
+              <input id="s6-bank" placeholder="or paste UUID manually" style="font-size:11px">
+            </div>
             <div class="field"><label>Amount</label><input id="s6-amount" value="10.00"></div>
             <div class="field"><label>Currency</label>
               <select id="s6-currency"><option>USD</option><option>EUR</option><option>MXN</option><option>SGD</option><option>BRL</option></select>
             </div>
           </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/withdraw',{bankAccountId:v('s6-bank'),amount:v('s6-amount')||'10.00',currency:v('s6-currency')},this,'step-6-badge')">
+          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/withdraw',{bankAccountId:v('s6-bank')||document.getElementById('s6-bank-select').value,amount:v('s6-amount')||'10.00',currency:v('s6-currency')},this,'step-6-badge')">
             <div class="spinner"></div><span class="btn-label">Withdraw</span>
           </button>
         </div>
         <!-- Step 7 -->
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div style="display:flex;align-items:center;gap:10px">
               <div class="step-badge" id="step-7-badge">7</div>
@@ -974,8 +1230,26 @@ body {
             <span class="card-method method-post">POST</span>
           </div>
           <div class="fields">
-            <div class="field"><label>Receipt Address ID<span class="required-mark">*</span></label><input id="s7-addrId" placeholder="uuid"></div>
-            <div class="field"><label>Bank Account ID<span class="required-mark">*</span></label><input id="s7-bank" placeholder="uuid"></div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between">
+                <span>Receipt Address<span class="required-mark">*</span></span>
+                <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadDepositAddressesSelect()">↻ Refresh</button>
+              </label>
+              <select id="s7-addrId-select" onchange="document.getElementById('s7-addrId').value=this.value" style="margin-bottom:4px">
+                <option value="">— select deposit address —</option>
+              </select>
+              <input id="s7-addrId" placeholder="or paste UUID manually" style="font-size:11px">
+            </div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between">
+                <span>Bank Account<span class="required-mark">*</span></span>
+                <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadWireAccountsSelect()">↻ Refresh</button>
+              </label>
+              <select id="s7-bank-select" onchange="document.getElementById('s7-bank').value=this.value" style="margin-bottom:4px">
+                <option value="">— select wire account —</option>
+              </select>
+              <input id="s7-bank" placeholder="or paste UUID manually" style="font-size:11px">
+            </div>
             <div class="field"><label>Destination Type</label>
               <select id="s7-type"><option value="wire">wire</option><option value="sepa">sepa</option><option value="sepa_instant">sepa_instant</option></select>
             </div>
@@ -983,7 +1257,7 @@ body {
               <select id="s7-currency"><option>USD</option><option>EUR</option></select>
             </div>
           </div>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/create',{receiptAddressId:v('s7-addrId'),bankAccountId:v('s7-bank'),destinationType:v('s7-type'),currency:v('s7-currency')},this,'step-7-badge')">
+          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/express-route/create',{receiptAddressId:v('s7-addrId')||document.getElementById('s7-addrId-select').value,bankAccountId:v('s7-bank')||document.getElementById('s7-bank-select').value,destinationType:v('s7-type'),currency:v('s7-currency')},this,'step-7-badge')">
             <div class="spinner"></div><span class="btn-label">Create Route</span>
           </button>
         </div>
@@ -997,7 +1271,7 @@ body {
         <div class="section-desc">Webhook subscriptions and live event stream</div>
       </div>
       <div class="cards-grid">
-        <div class="card">
+        <div class="card method-get-card">
           <div class="card-header">
             <div><div class="card-title">List Subscriptions</div><div class="card-endpoint">GET /api/notifications/subscriptions</div></div>
             <span class="card-method method-get">GET</span>
@@ -1006,7 +1280,7 @@ body {
             <div class="spinner"></div><span class="btn-label">List Subscriptions</span>
           </button>
         </div>
-        <div class="card">
+        <div class="card method-post-card">
           <div class="card-header">
             <div><div class="card-title">Create Subscription</div><div class="card-endpoint">POST /api/notifications/subscriptions</div></div>
             <span class="card-method method-post">POST</span>
@@ -1018,32 +1292,44 @@ body {
             </div>
           </div>
           <p style="font-size:10px;color:var(--text-muted);margin-top:2px">Must be a publicly accessible HTTPS URL. For local dev, use a tunnel like ngrok pointed at <code>http://localhost:3000/webhooks</code></p>
-          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/notifications/subscriptions',{endpoint:v('sub-endpoint')},this)">
+          <button class="btn btn-primary btn-full" onclick="callApi('POST','/api/notifications/subscriptions',{endpoint:v('sub-endpoint')},this,'','create-subscription')">
             <div class="spinner"></div><span class="btn-label">Subscribe</span>
           </button>
         </div>
-        <div class="card">
+        <div class="card method-delete-card">
           <div class="card-header">
             <div><div class="card-title">Delete Subscription</div><div class="card-endpoint">DELETE /api/notifications/subscriptions/:id</div></div>
             <span class="card-method method-delete">DELETE</span>
           </div>
           <div class="fields">
-            <div class="field"><label>Subscription ID<span class="required-mark">*</span></label><input id="del-sub-id" placeholder="uuid"></div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between">
+                <span>Subscription<span class="required-mark">*</span></span>
+                <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:10px;height:auto" onclick="loadSubscriptionsSelect()">↻ Refresh</button>
+              </label>
+              <select id="del-sub-select" onchange="document.getElementById('del-sub-id').value=this.value" style="margin-bottom:4px">
+                <option value="">— select subscription —</option>
+              </select>
+              <input id="del-sub-id" placeholder="or paste UUID manually" style="font-size:11px">
+            </div>
           </div>
-          <button class="btn btn-danger btn-full" onclick="callApi('DELETE',`/api/notifications/subscriptions/${v('del-sub-id')}`,null,this)">
+          <button class="btn btn-danger btn-full" onclick="callApi('DELETE',`/api/notifications/subscriptions/${v('del-sub-id')||document.getElementById('del-sub-select').value}`,null,this)">
             <div class="spinner"></div><span class="btn-label">Delete</span>
           </button>
         </div>
       </div>
 
-      <!-- Live event feed -->
       <div style="margin-top:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="font-family:var(--sans);font-size:16px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px">
-            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.5s infinite"></span>
+            <span id="sse-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);display:inline-block;transition:background .3s"></span>
             Live Event Stream
+            <span id="sse-status" style="font-family:var(--mono);font-size:10px;color:var(--text-muted);font-weight:400">connecting…</span>
           </div>
-          <button class="btn btn-ghost" onclick="document.getElementById('notif-feed').innerHTML=''">Clear</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" onclick="sendTestNotification(this)" style="font-size:11px">Send Test Event</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('notif-feed').innerHTML=''">Clear</button>
+          </div>
         </div>
         <p style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Webhooks received at <code style="color:var(--text-dim)">/webhooks</code> appear here in real-time via SSE.</p>
         <div class="notif-feed" id="notif-feed">
@@ -1053,32 +1339,44 @@ body {
     </div>
 
   </main>
-</div>
 
-<!-- Log panel -->
-<div class="log-panel">
-  <div class="log-header">
-    <div class="log-title">
-      <div class="log-blink" id="log-blink"></div>
-      API Output Log
+  <!-- ── Log panel (right side) ── -->
+  <div class="log-panel" id="log-panel">
+    <button class="log-collapse-toggle" id="log-toggle" onclick="toggleLog()" title="Toggle log panel">&#10216;</button>
+    <div class="log-panel-inner">
+      <div class="log-header">
+        <div class="log-title">
+          <div class="log-blink" id="log-blink"></div>
+          API Log
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:10px;min-height:unset" onclick="document.getElementById('log-body').innerHTML='<div style=\'color:var(--text-muted);font-size:11px;text-align:center;padding:12px\'>Run a command to see output here</div>'">Clear</button>
+        </div>
+      </div>
+      <div class="log-body" id="log-body">
+        <div style="color:var(--text-muted);font-size:11px;text-align:center;padding:12px">Run a command to see output here</div>
+      </div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost" style="padding:4px 10px;font-size:10px" onclick="document.getElementById('log-body').innerHTML=''">Clear</button>
-    </div>
-  </div>
-  <div class="log-body" id="log-body">
-    <div style="color:var(--text-muted);font-size:11px;text-align:center;padding:12px">Run a command to see output here</div>
+    <div class="log-collapsed-label">API Log</div>
   </div>
 </div>
 
 <script>
-// ── Helpers ──────────────────────────────────────────────────────────────
+// ── App state ─────────────────────────────────────────────────────────────
+const appState = {};
+
+// ── Helpers ───────────────────────────────────────────────────────────────
 const v = id => document.getElementById(id)?.value?.trim() || '';
 
 function ts() {
   return new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────
 function log(tag, content, tagClass = 'tag-info') {
   const body = document.getElementById('log-body');
   const first = body.firstElementChild;
@@ -1095,16 +1393,16 @@ function log(tag, content, tagClass = 'tag-info') {
   body.appendChild(el);
   body.scrollTop = body.scrollHeight;
 
-  // Flash blink
+  // Pulse blink dot
   const blink = document.getElementById('log-blink');
-  blink.style.background = tagClass === 'tag-err' ? 'var(--red)' : 'var(--green)';
-  setTimeout(() => { blink.style.background = 'var(--green)'; }, 600);
+  blink.style.background = tagClass === 'tag-err' ? 'var(--red)' : tagClass === 'tag-ok' ? 'var(--green)' : 'var(--accent)';
+  blink.classList.remove('active');
+  void blink.offsetWidth; // reflow to restart animation
+  blink.classList.add('active');
+  setTimeout(() => { blink.style.background = 'var(--green)'; blink.classList.remove('active'); }, 1000);
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
+// ── Toast ─────────────────────────────────────────────────────────────────
 function toast(msg, type = 'info') {
   const c = document.getElementById('toast-container');
   const t = document.createElement('div');
@@ -1114,10 +1412,97 @@ function toast(msg, type = 'info') {
   setTimeout(() => t.remove(), 3500);
 }
 
-// ── API caller ────────────────────────────────────────────────────────────
+// ── Copy field ────────────────────────────────────────────────────────────
+function copyField(id) {
+  const inp = document.getElementById(id);
+  if (!inp || !inp.value) return;
+  navigator.clipboard.writeText(inp.value).then(() => {
+    toast('Copied to clipboard', 'success');
+  }).catch(() => {
+    toast('Copy failed', 'error');
+  });
+}
+
+// ── Auto-fill ─────────────────────────────────────────────────────────────
+function fillField(id, value) {
+  const el = document.getElementById(id);
+  if (!el || value === undefined || value === null) return;
+  el.value = value;
+  el.classList.remove('autofilled');
+  void el.offsetWidth;
+  el.classList.add('autofilled');
+
+  // Add hint text
+  const field = el.closest('.field');
+  if (field) {
+    const existing = field.querySelector('.autofill-hint');
+    if (existing) existing.remove();
+    const hint = document.createElement('div');
+    hint.className = 'autofill-hint';
+    hint.textContent = 'auto-filled';
+    field.appendChild(hint);
+    setTimeout(() => hint.remove(), 3500);
+  }
+
+  setTimeout(() => el.classList.remove('autofilled'), 1600);
+}
+
+function autoFill(key, data) {
+  if (!key) return;
+  switch (key) {
+    case 'er-link-bank': {
+      const id = data?.data?.id;
+      if (id) { fillField('s6-bank', id); fillField('s7-bank', id); fillField('wd-bankid', id); }
+      break;
+    }
+    case 'er-link-receipt': {
+      const id = data?.data?.id;
+      const addr = data?.data?.address;
+      if (id) fillField('s7-addrId', id);
+      if (addr) fillField('s4-addr', addr);
+      loadDepositAddressesSelect();
+      break;
+    }
+    case 'create-wire': {
+      const id = data?.data?.id;
+      if (id) { fillField('s6-bank', id); fillField('s7-bank', id); }
+      loadWireAccountsSelect();
+      break;
+    }
+    case 'list-wires': {
+      loadWireAccountsSelect();
+      break;
+    }
+    case 'wire-instructions': {
+      const ref = data?.data?.trackingRef;
+      const acct = data?.data?.beneficiaryBank?.accountNumber;
+      if (ref) { fillField('s3-ref', ref); fillField('mw-ref', ref); }
+      if (acct) { fillField('s3-acct', acct); fillField('mw-acct', acct); }
+      break;
+    }
+    case 'add-address-book': {
+      const id = data?.data?.id;
+      if (id) { fillField('po-recip', id); fillField('ab-del-id', id); }
+      loadAddressBookSelect();
+      break;
+    }
+    case 'create-recipient': {
+      const id = data?.data?.id;
+      if (id) { fillField('bt-recip', id); fillField('s5-recip', id); }
+      loadRecipientsSelect();
+      break;
+    }
+    case 'create-subscription': {
+      loadSubscriptionsSelect();
+      break;
+    }
+  }
+}
+
+// ── Account info ──────────────────────────────────────────────────────────
 async function loadAccountInfo(btn) {
-  btn.classList.add('loading');
-  btn.disabled = true;
+  const isBtn = btn && btn.classList;
+  if (isBtn) { btn.classList.add('loading'); btn.disabled = true; }
   try {
     const res = await fetch('/api/account');
     const json = await res.json();
@@ -1130,21 +1515,20 @@ async function loadAccountInfo(btn) {
       document.getElementById('acct-type').textContent = wallet.type || '—';
       document.getElementById('acct-type').style.color = 'var(--text)';
       log('RES', wallet, 'tag-ok');
-      toast('Account info loaded', 'success');
+      if (isBtn) toast('Account info loaded', 'success');
     } else {
-      toast('No wallet data returned', 'error');
+      if (isBtn) toast('No wallet data returned', 'error');
     }
   } catch (err) {
-    toast('Failed to load account info', 'error');
+    if (isBtn) toast('Failed to load account info', 'error');
     log('ERR', err.message, 'tag-err');
   } finally {
-    btn.classList.remove('loading');
-    btn.disabled = false;
+    if (isBtn) { btn.classList.remove('loading'); btn.disabled = false; }
   }
 }
 
-async function callApi(method, url, body, btn, badgeId) {
-  // Validate required-ish fields (non-empty check on url params)
+// ── API caller ────────────────────────────────────────────────────────────
+async function callApi(method, url, body, btn, badgeId, autoFillKey) {
   if (url.includes('undefined') || url.includes('null') || url.includes('//')) {
     toast('Please fill in all required fields', 'error');
     return;
@@ -1180,10 +1564,10 @@ async function callApi(method, url, body, btn, badgeId) {
       if (json.logs?.length) json.logs.forEach(l => log('LOG', l, 'tag-err'));
       toast(`${label} failed`, 'error');
     } else {
-      // Print logs first
       if (json.logs?.length) json.logs.forEach(l => log('LOG', l, 'tag-ok'));
       if (json.data) log('RES', json.data, 'tag-ok');
       if (badgeId) document.getElementById(badgeId)?.classList.add('done');
+      if (autoFillKey) autoFill(autoFillKey, json);
       toast(`${label} — OK`, 'success');
     }
   } catch (err) {
@@ -1195,6 +1579,204 @@ async function callApi(method, url, body, btn, badgeId) {
   }
 }
 
+// ── Log panel toggle ──────────────────────────────────────────────────────
+function toggleLog() {
+  const app = document.getElementById('app');
+  const toggle = document.getElementById('log-toggle');
+  const collapsed = app.classList.toggle('log-collapsed');
+  toggle.innerHTML = collapsed ? '&#10217;' : '&#10216;';
+  toggle.title = collapsed ? 'Expand log panel' : 'Collapse log panel';
+}
+
+// ── Recipients select ────────────────────────────────────────────────────
+async function loadRecipientsSelect() {
+  const selIds = ['bt-recip-select', 's5-recip-select'];
+  try {
+    const res = await fetch('/api/recipients');
+    const json = await res.json();
+    const recipients = json.data?.data ?? json.data ?? [];
+    const list = Array.isArray(recipients) ? recipients : [];
+    selIds.forEach(selId => {
+      const sel = document.getElementById(selId);
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">— select recipient —</option>';
+      list.forEach(r => {
+        const label = [r.description, r.chain, r.address ? r.address.slice(0, 10) + '…' : null].filter(Boolean).join(' · ');
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = label || r.id;
+        if (r.id === prev) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (sel.value) {
+        if (selId === 'bt-recip-select') document.getElementById('bt-recip').value = sel.value;
+        if (selId === 's5-recip-select') document.getElementById('s5-recip').value = sel.value;
+      }
+    });
+  } catch { /* silently ignore */ }
+}
+
+// ── Deposit addresses select ──────────────────────────────────────────────
+async function loadDepositAddressesSelect() {
+  const selIds = ['s7-addrId-select'];
+  try {
+    const res = await fetch('/api/deposits/addresses');
+    const json = await res.json();
+    const addresses = json.data?.data ?? json.data ?? [];
+    const list = Array.isArray(addresses) ? addresses : [];
+    selIds.forEach(selId => {
+      const sel = document.getElementById(selId);
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">— select deposit address —</option>';
+      list.forEach(a => {
+        const label = [a.chain, a.currency, a.address ? a.address.slice(0, 12) + '…' : null].filter(Boolean).join(' · ');
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = label || a.id;
+        if (a.id === prev) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (sel.value) document.getElementById('s7-addrId').value = sel.value;
+    });
+  } catch { /* silently ignore */ }
+}
+
+// ── Wire accounts selects ────────────────────────────────────────────────
+async function loadWireAccountsSelect() {
+  try {
+    const res = await fetch('/api/banks/wires');
+    const json = await res.json();
+    const accounts = json.data?.data ?? json.data ?? [];
+    const list = Array.isArray(accounts) ? accounts : [];
+    ['wi-bank-select', 'mw-bank-select', 'wd-bank-select', 's3-bank-select', 's6-bank-select', 's7-bank-select'].forEach(selId => {
+      const sel = document.getElementById(selId);
+      if (!sel) return;
+      const prev = sel.value;
+      const placeholder = (selId === 'mw-bank-select' || selId === 's3-bank-select')
+        ? '— select bank to load instructions —'
+        : '— select wire account —';
+      sel.innerHTML = `<option value="">${placeholder}</option>`;
+      list.forEach(a => {
+        const label = [a.description || a.bankAddress?.bankName, a.status].filter(Boolean).join(' · ');
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = label || a.id;
+        if (a.id === prev) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      // Sync linked text inputs
+      if (sel.value) {
+        if (selId === 'wi-bank-select') document.getElementById('wi-id').value = sel.value;
+        if (selId === 'wd-bank-select') document.getElementById('wd-bankid').value = sel.value;
+        if (selId === 's6-bank-select') document.getElementById('s6-bank').value = sel.value;
+        if (selId === 's7-bank-select') document.getElementById('s7-bank').value = sel.value;
+      }
+    });
+  } catch { /* silently ignore */ }
+}
+
+async function loadWireInstructionsIntoForm(bankId) {
+  if (!bankId) return;
+  try {
+    const res = await fetch(`/api/banks/wires/${bankId}/instructions`);
+    const json = await res.json();
+    const d = json.data?.data;
+    if (d?.trackingRef) fillField('mw-ref', d.trackingRef);
+    if (d?.beneficiaryBank?.accountNumber) fillField('mw-acct', d.beneficiaryBank.accountNumber);
+  } catch { /* silently ignore */ }
+}
+
+async function loadWireInstructionsForStep3(bankId) {
+  if (!bankId) return;
+  try {
+    const res = await fetch(`/api/banks/wires/${bankId}/instructions`);
+    const json = await res.json();
+    const d = json.data?.data;
+    if (d?.trackingRef) fillField('s3-ref', d.trackingRef);
+    if (d?.beneficiaryBank?.accountNumber) fillField('s3-acct', d.beneficiaryBank.accountNumber);
+  } catch { /* silently ignore */ }
+}
+
+// ── Subscriptions select ──────────────────────────────────────────────────
+async function loadSubscriptionsSelect() {
+  const sel = document.getElementById('del-sub-select');
+  if (!sel) return;
+  try {
+    const res = await fetch('/api/notifications/subscriptions');
+    const json = await res.json();
+    const subs = json.data?.data ?? json.data ?? [];
+    const list = Array.isArray(subs) ? subs : [];
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— select subscription —</option>';
+    list.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.endpoint ? s.endpoint.replace(/^https?:\/\//, '') : s.id;
+      if (s.id === prev) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    if (sel.value) document.getElementById('del-sub-id').value = sel.value;
+  } catch { /* silently ignore */ }
+}
+
+// ── Address book select ───────────────────────────────────────────────────
+async function loadAddressBookSelect() {
+  const sel = document.getElementById('po-recip-select');
+  if (!sel) return;
+  try {
+    const res = await fetch('/api/payouts/address-book');
+    const json = await res.json();
+    const recipients = json.data?.data ?? json.data ?? [];
+    const list = Array.isArray(recipients) ? recipients : [];
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— select from address book —</option>';
+    list.forEach(r => {
+      const label = [
+        r.metadata?.nickname || r.nickname,
+        r.chain,
+        r.address ? r.address.slice(0, 10) + '…' : null,
+      ].filter(Boolean).join(' · ');
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = label || r.id;
+      if (r.id === prev) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    if (sel.value) document.getElementById('po-recip').value = sel.value;
+  } catch { /* silently ignore — user can still paste manually */ }
+}
+
+// ── Deposit chains select ─────────────────────────────────────────────────
+const CHAIN_NAME_TO_CODE = {
+  'Ethereum': 'ETH', 'Polygon': 'POLY', 'Base': 'BASE', 'Arbitrum': 'ARB',
+  'Avalanche': 'AVAX', 'Solana': 'SOL', 'Bitcoin': 'BTC', 'Optimism': 'OP',
+  'Noble': 'NOBLE', 'Stellar': 'XLM', 'XRP': 'XRP', 'Algorand': 'ALGO',
+  'Hedera': 'HBAR', 'NEAR': 'NEAR', 'Sui': 'SUI', 'Aptos': 'APTOS',
+  'Celo': 'CELO', 'Linea': 'LINEA', 'Unichain': 'UNI', 'World Chain': 'WORLDCHAIN',
+  'Sonic': 'SONIC', 'Sei': 'SEI', 'Codex': 'CODEX', 'HyperEVM': 'HYPEREVM',
+  'Ink': 'INK', 'Plume': 'PLUME', 'XDC': 'XDC', 'zkSync': 'ZKS',
+};
+
+async function loadDepositChainsSelect() {
+  const sel = document.getElementById('dep-chain');
+  if (!sel) return;
+  try {
+    const res = await fetch('/api/chains');
+    const json = await res.json();
+    const chains = json.data?.chains ?? json.data?.data?.chains ?? [];
+    if (!Array.isArray(chains) || chains.length === 0) return;
+    sel.innerHTML = '';
+    chains.forEach(c => {
+      const code = CHAIN_NAME_TO_CODE[c.name] || c.name.toUpperCase().replace(/\s+/g, '');
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = `${code} — ${c.name}`;
+      sel.appendChild(opt);
+    });
+  } catch { /* keep placeholder */ }
+}
 
 // ── Navigation ────────────────────────────────────────────────────────────
 document.querySelectorAll('.nav-item[data-section]').forEach(item => {
@@ -1205,13 +1787,59 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item => {
     item.classList.add('active');
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(`section-${target}`)?.classList.add('active');
+    if (target === 'send') {
+      const activeSub = document.querySelector('#section-send .sub-nav-item.active')?.dataset.subsection;
+      if (activeSub === 'transfers') loadRecipientsSelect();
+      else loadAddressBookSelect();
+    }
+    if (target === 'fund') { loadWireAccountsSelect(); loadDepositChainsSelect(); }
+    if (target === 'withdraw') loadWireAccountsSelect();
+    if (target === 'express') { loadWireAccountsSelect(); loadRecipientsSelect(); loadDepositAddressesSelect(); }
+    if (target === 'notifications') loadSubscriptionsSelect();
+  });
+});
+
+// ── Sub-nav tabs ──────────────────────────────────────────────────────────
+document.querySelectorAll('.sub-nav-item[data-subsection]').forEach(item => {
+  item.addEventListener('click', e => {
+    e.preventDefault();
+    const target = item.dataset.subsection;
+    const section = item.closest('.section');
+    section.querySelectorAll('.sub-nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    section.querySelectorAll('.subsection').forEach(s => s.classList.remove('active'));
+    document.getElementById(`subsection-${target}`)?.classList.add('active');
+    if (target === 'payouts') loadAddressBookSelect();
+    if (target === 'transfers') loadRecipientsSelect();
   });
 });
 
 // ── SSE – live notifications ──────────────────────────────────────────────
+function setSseStatus(connected) {
+  const dot = document.getElementById('sse-dot');
+  const label = document.getElementById('sse-status');
+  if (!dot || !label) return;
+  if (connected) {
+    dot.style.background = 'var(--green)';
+    dot.style.animation = 'pulse 1.5s infinite';
+    label.textContent = 'connected';
+    label.style.color = 'var(--green)';
+  } else {
+    dot.style.background = 'var(--red)';
+    dot.style.animation = 'none';
+    label.textContent = 'reconnecting…';
+    label.style.color = 'var(--text-muted)';
+  }
+}
+
+let _sseSource = null;
 (function connectSSE() {
-  const es = new EventSource('/api/events');
-  es.addEventListener('notification', e => {
+  if (_sseSource) { _sseSource.close(); }
+  _sseSource = new EventSource('/api/events');
+
+  _sseSource.addEventListener('connected', () => setSseStatus(true));
+
+  _sseSource.addEventListener('notification', e => {
     const data = JSON.parse(e.data);
     const feed = document.getElementById('notif-feed');
     const placeholder = feed.querySelector('[style*="Waiting"]');
@@ -1221,21 +1849,37 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item => {
     item.className = 'notif-item';
     item.innerHTML = `
       <div class="notif-type">${data.payload?.notificationType || 'webhook'}</div>
-      <div class="notif-body">${JSON.stringify(data.payload, null, 2)}</div>
+      <div class="notif-body">${escHtml(JSON.stringify(data.payload, null, 2))}</div>
       <div class="notif-time">${data.timestamp}</div>
     `;
     feed.insertBefore(item, feed.firstChild);
 
-    // Show nav dot
     document.getElementById('notif-nav-dot').classList.add('visible');
     toast('Webhook received: ' + (data.payload?.notificationType || 'event'), 'info');
     log('WEBHOOK', data.payload, 'tag-info');
   });
 
-  es.onerror = () => {
-    setTimeout(connectSSE, 3000); // reconnect
+  _sseSource.onerror = () => {
+    setSseStatus(false);
+    _sseSource.close();
+    setTimeout(connectSSE, 3000);
   };
 })();
+
+async function sendTestNotification(btn) {
+  btn.disabled = true;
+  try {
+    await fetch('/api/test-notification', { method: 'POST' });
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Auto-load account info on page load ──────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadAccountInfo(null);
+  loadDepositChainsSelect();
+});
 </script>
 </body>
 </html>
