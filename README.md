@@ -69,6 +69,50 @@ The **Express Route** section walks through all 7 steps for auto-redeeming on-ch
 
 ---
 
+## MCP Server
+
+All Circle Mint operations are exposed as an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server, so any MCP-compatible AI client (Claude Desktop, Claude Code, etc.) can call them directly.
+
+### Usage
+
+```bash
+npm run mcp   # starts the stdio MCP server
+```
+
+### Claude Code / Claude Desktop config
+
+Add to your `claude_desktop_config.json` (or `.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "circle-mint": {
+      "command": "npm",
+      "args": ["--prefix", "/path/to/circle-playground", "run", "mcp"],
+      "env": {
+        "CIRCLE_API_KEY": "your_api_key_here",
+        "CIRCLE_ENV": "sandbox"
+      }
+    }
+  }
+}
+```
+
+### Available tools (32)
+
+| Group | Tools |
+|---|---|
+| **Overview** | `get_wallets`, `get_balance`, `get_supported_chains` |
+| **Deposits** | `list_deposits`, `list_deposit_addresses`, `create_deposit_address` |
+| **Address Book** | `list_address_book`, `add_address_book_recipient`, `delete_address_book_recipient` |
+| **Payouts** | `list_payouts`, `create_payout` |
+| **Wire Accounts** | `list_wire_accounts`, `create_wire_account`, `get_wire_instructions`, `mock_wire_deposit`, `business_payout` |
+| **Transfers** | `list_recipients`, `create_recipient`, `business_transfer` |
+| **Notifications** | `list_subscriptions`, `create_subscription`, `delete_subscription` |
+| **Express Route** | `express_route_link_bank`, `express_route_link_receipt`, `express_route_mock_deposit`, `express_route_onchain_deposit`, `express_route_transfer`, `express_route_withdraw`, `express_route_create`, `express_route_run_full` |
+
+---
+
 ## CLI
 
 All commands are also available from the terminal.
@@ -93,6 +137,7 @@ Get your API key from the [Circle Developer Console](https://console.circle.com)
 | Script | Description |
 |---|---|
 | `npm run server` | Start the web dashboard at http://localhost:3000 |
+| `npm run mcp` | Start the MCP server (stdio) |
 | `npm run dev <cmd>` | Run any CLI command (see below) |
 | `npm run account <cmd>` | Account & transfer sub-commands |
 | `npm run express-route <cmd>` | Express route sub-commands |
